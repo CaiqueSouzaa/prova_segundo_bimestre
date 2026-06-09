@@ -1,14 +1,15 @@
-import { Controller, Get, Query, Post, Put, Delete, Param, Body, UseFilters, HttpCode, HttpStatus } from "@nestjs/common";
-import { ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody, ApiTags } from "@nestjs/swagger";
+import { Controller, Get, Query, Post, Put, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody, ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { UsuarioApplication } from "src/applications/usuario.application";
 import { UsuarioFindAllDTO } from "src/dto/usuario/usuario-find-all.dto";
 import { IdDTO } from "src/dto/id.dto";
 import { UsuarioCreateDTO } from "src/dto/usuario/usuario-create.dto";
 import { UsuarioUpdateDTO } from "src/dto/usuario/usuario-update.dto";
-import { HttpExceptionFilter } from "src/handler/http-exception.filter";
+import { AuthGuard } from "src/guards/auth.guard";
 
+@UseGuards(AuthGuard)
 @ApiTags('Usuários')
-@UseFilters(HttpExceptionFilter)
+@ApiBearerAuth('JWT-auth') 
 @Controller('usuarios')
 export class UsuarioController {
     constructor(

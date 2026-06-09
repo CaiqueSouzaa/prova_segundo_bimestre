@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsuarioController } from './usuario.controller';
+import { UsuarioController } from 'src/controllers/usuario/usuario.controller';
 import { UsuarioApplication } from 'src/applications/usuario.application';
 import { UsuarioFindAllDTO } from 'src/dto/usuario/usuario-find-all.dto';
 import { UsuarioCreateDTO } from 'src/dto/usuario/usuario-create.dto';
