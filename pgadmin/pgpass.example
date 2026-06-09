@@ -1,0 +1,1 @@
+postgres:5432:*:usuario_banco:senha_banco

@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Sistema de Vendas",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "usuario_banco",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}
