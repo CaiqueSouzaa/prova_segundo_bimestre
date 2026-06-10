@@ -28,7 +28,7 @@ export class UsuarioApplication {
             const entity: Usuario = UsuarioMapper.createToEntity(dto);
 
             // Verificando se o endereço de e-mail informado já está cadastrado
-            const hasEmail: boolean = await this.usuarioService.hasEmail(entity.email);
+            const hasEmail: boolean = await this.usuarioService.hasEmail(entity.email, t);
 
             if (hasEmail) {
                 throw new Error('Endereço de e-mail não disponível para uso');
@@ -58,7 +58,7 @@ export class UsuarioApplication {
             entity.senha = dados.senha;
 
             // Checando se já existe usuário com o endereço de e-mail informado
-            const hasEmail: boolean = await this.usuarioService.hasEmail(entity.email);
+            const hasEmail: boolean = await this.usuarioService.hasEmail(entity.email, t);
 
             if (hasEmail && entity.email !== dados.email) {
                 throw new Error('Endereço de e-mail não disponível para uso');

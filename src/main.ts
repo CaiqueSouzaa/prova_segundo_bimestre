@@ -14,6 +14,7 @@ async function bootstrap() {
     .setTitle('Vendas API')
     .setDescription('Documentação da API de vendas')
     .setVersion('1.0')
+    .addTag('Autenticação')
     .addBearerAuth(
       {
         type: 'http',

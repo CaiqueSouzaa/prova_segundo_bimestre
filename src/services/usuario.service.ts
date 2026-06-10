@@ -151,8 +151,6 @@ export class UsuarioService {
         //     throw new Error('Senha de usuário não deve ser vázio');
         // }
 
-        console.log(dados);
-
         return repository.save(dados);
     }
 

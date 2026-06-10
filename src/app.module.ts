@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthApplicationModule } from './modules/auth/auth-application.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ClienteApplicationModule } from './modules/cliente/cliente-application.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
     }),
     UsuarioApplicationModule,
     AuthApplicationModule,
+    ClienteApplicationModule,
   ],
   controllers: [],
   providers: [],
