@@ -18,7 +18,6 @@ export class ItemApplication {
     public async findAll({ page = 1, limit = 10 }: FindAllDTO): Promise<Page<Item>> {
         return await this.dataSource.manager.transaction(async (t) => {
             const result = await this.itemService.findAll(Number(page), Number(limit), t);
-            result.data.forEach(usuario => delete (usuario as any).senha);
             return result;
         });
     }
@@ -33,16 +32,15 @@ export class ItemApplication {
                 throw new Error('Código não disponível para uso');
             }
 
-            const savedCliente = await this.itemService.save(entity, t);
-            return savedCliente;
+            const savedItem = await this.itemService.save(entity, t);
+            return savedItem;
         });
     }
 
     public async show(codigo: string): Promise<Item> {
         return await this.dataSource.manager.transaction(async (t) => {
-            const cliente = await this.itemService.show(codigo, t);
-            delete (cliente as any).senha;
-            return cliente;
+            const item = await this.itemService.show(codigo, t);
+            return item;
         });
     }
 

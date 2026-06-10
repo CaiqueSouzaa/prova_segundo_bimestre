@@ -1,11 +1,13 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { ItemApplication } from "src/applications/item.application";
 import { FindAllDTO } from "src/dto/find-all.dto";
 import { ItemCreateDTO } from "src/dto/item/item-create.dto";
 import { ItemShowDTO } from "src/dto/item/item-show.dto";
 import { ItemUpdateDTO } from "src/dto/item/item-update.dto";
+import { AuthGuard } from "src/guards/auth.guard";
 
+@UseGuards(AuthGuard)
 @ApiTags('Items')
 @ApiBearerAuth('JWT-auth') 
 @Controller('itens')
@@ -76,7 +78,7 @@ export class ItemController {
     }
 
     @Get(':codigo')
-    @ApiOperation({ summary: 'Retorna os dados de um item específico pelo ID' })
+    @ApiOperation({ summary: 'Retorna os dados de um item específico pelo código' })
     @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 1 })
     @ApiResponse({
         status: 200,

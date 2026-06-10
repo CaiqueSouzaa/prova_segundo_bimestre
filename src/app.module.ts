@@ -6,6 +6,7 @@ import { AuthApplicationModule } from './modules/auth/auth-application.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ClienteApplicationModule } from './modules/cliente/cliente-application.module';
 import { ItemApplicationModule } from './modules/item/item-application.module';
+import { VendaApplicationModule } from './modules/venda/venda-application.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ItemApplicationModule } from './modules/item/item-application.module';
     AuthApplicationModule,
     ClienteApplicationModule,
     ItemApplicationModule,
+    VendaApplicationModule,
   ],
   controllers: [],
   providers: [],

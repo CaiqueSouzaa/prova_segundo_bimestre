@@ -18,7 +18,6 @@ export class ClienteApplication {
     public async findAll({ page = 1, limit = 10 }: FindAllDTO): Promise<Page<Cliente>> {
         return await this.dataSource.manager.transaction(async (t) => {
             const result = await this.clienteService.findAll(Number(page), Number(limit), t);
-            result.data.forEach(usuario => delete (usuario as any).senha);
             return result;
         });
     }

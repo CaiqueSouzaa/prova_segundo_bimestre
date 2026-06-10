@@ -8,7 +8,7 @@ import { FindAllDTO } from "src/dto/find-all.dto";
 import { ClienteUpdateDTO } from "src/dto/cliente/cliente-update.dto";
 import { ClienteCreateDTO } from "src/dto/cliente/cliente-create.dto";
 
-// @UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
 @ApiTags('Clientes')
 @ApiBearerAuth('JWT-auth') 
 @Controller('clientes')

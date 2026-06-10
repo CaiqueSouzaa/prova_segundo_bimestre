@@ -99,7 +99,7 @@ export class ItemService {
             });
     
             if (!item) {
-                throw new Error('Código de item não localizado');
+                throw new Error(`Código de item [${ codigo }] não localizado`);
             }
     
             return item;
