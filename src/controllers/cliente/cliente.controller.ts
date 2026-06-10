@@ -5,8 +5,8 @@ import { UsuarioCreateDTO } from "src/dto/usuario/usuario-create.dto";
 import { AuthGuard } from "src/guards/auth.guard";
 import { ClienteApplication } from "src/applications/cliente.application";
 import { FindAllDTO } from "src/dto/find-all.dto";
-import { ClienteCreateDTO } from "src/dto/cliente/cliente-create.dto";
 import { ClienteUpdateDTO } from "src/dto/cliente/cliente-update.dto";
+import { ClienteCreateDTO } from "src/dto/cliente/cliente-create.dto";
 
 // @UseGuards(AuthGuard)
 @ApiTags('Clientes')
