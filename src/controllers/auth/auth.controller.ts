@@ -19,8 +19,8 @@ export class AuthController {
             exemplo: {
                 summary: 'Exemplo de requisição',
                 value: {
-                    email: 'joao.silva@email.com',
-                    senha: 'SenhaForte123',
+                    email: 'admin@email.com',
+                    senha: 'Admin@123',
                 }
             }
         }
@@ -30,7 +30,7 @@ export class AuthController {
         description: 'Usuário logado com sucesso',
         schema: {
             example: {
-                token: 'eoijdf...'
+                token: 'eyJhbGci...'
             }
         }
     })

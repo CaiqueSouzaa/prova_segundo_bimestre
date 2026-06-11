@@ -40,6 +40,7 @@ export class UsuarioController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado (Token ausente ou inválido).' })
     @HttpCode(HttpStatus.OK)
     public async findAll(@Query() dto: UsuarioFindAllDTO) {
         return this.usuarioApplication.findAll(dto);
@@ -74,6 +75,8 @@ export class UsuarioController {
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: E-mail não disponível ou campos obrigatórios vazios).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
     @HttpCode(HttpStatus.CREATED)
     public async save(@Body() dto: UsuarioCreateDTO) {
         return this.usuarioApplication.save(dto);
@@ -94,6 +97,8 @@ export class UsuarioController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
     @HttpCode(HttpStatus.OK)
     public async show(@Param() { id }: IdDTO) {
         return this.usuarioApplication.show(id);
@@ -124,10 +129,13 @@ export class UsuarioController {
                 id: 1,
                 email: 'jose.camargo@email.com',
                 nome: 'José',
-                sobrenome: 'Carmargo'
+                sobrenome: 'Camargo' // <- CORRIGIDO AQUI (antes estava Carmargo)
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: E-mail não disponível para uso).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
     @HttpCode(HttpStatus.OK)
     public async update(@Param() { id }: IdDTO, @Body() dto: UsuarioUpdateDTO) {
         dto.id = id;
@@ -138,6 +146,8 @@ export class UsuarioController {
     @ApiOperation({ summary: 'Remove um usuário pelo ID' })
     @ApiParam({ name: 'id', description: 'ID do usuário', type: Number, example: 1 })
     @ApiResponse({ status: 204, description: 'Usuário removido com sucesso.' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
     @HttpCode(HttpStatus.NO_CONTENT)
     public async delete(@Param() { id }: IdDTO) {
         return this.usuarioApplication.delete(id);

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { VendaApplication } from "src/applications/venda.application";
 import { FindAllDTO } from "src/dto/find-all.dto";
 import { IdDTO } from "src/dto/id.dto";
@@ -9,6 +9,7 @@ import { AuthGuard } from "src/guards/auth.guard";
 import type { IdRequest } from "src/interfaces/id-request";
 
 @UseGuards(AuthGuard)
+@ApiTags('Vendas') // <- ADICIONADO PARA ORGANIZAÇÃO NO SWAGGER
 @ApiBearerAuth('JWT-auth')
 @Controller('vendas')
 export class VendaController {
@@ -28,15 +29,18 @@ export class VendaController {
                 data: [
                     {
                         id: 1,
-                        cliente: {
-                            id: 4,
-                            nome: 'João',
-                            sobrenome: 'Sales',
-                        },
+                        dataVenda: "2026-06-11T18:28:08.764Z",
                         usuario: {
+                            id: 1,
+                            email: "admin@email.com",
+                            nome: "Administrador",
+                            sobrenome: "Sistema"
+                        },
+                        cliente: {
                             id: 2,
-                            nome: 'Fulano',
-                            sobrenome: 'Pancho',
+                            cpf: "12345678901",
+                            nome: "João",
+                            sobrenome: "Silva"
                         }
                     }
                 ],
@@ -47,6 +51,7 @@ export class VendaController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado (Token ausente ou inválido).' })
     @HttpCode(HttpStatus.OK)
     public async findAll(@Query() dto: FindAllDTO) {
         return this.vendaApplication.findAll(dto);
@@ -56,55 +61,58 @@ export class VendaController {
     @ApiOperation({ summary: 'Cria uma nova venda' })
     @ApiBody({
         type: VendaCreateDTO,
-        description: 'Dados para criação da venda. O campo valor é opcional, recebendo como valor padrão o valor cadastrado no item',
+        description: 'Dados para criação da venda',
         examples: {
             exemplo: {
                 summary: 'Exemplo de requisição',
                 value: {
-                    cliente_id: 4,
+                    cliente_id: 1,
                     itens: [
                         {
-                            codigo: 'ES-0001',
-                            quantia: 1.00,
-                        },
-                        {
-                            codigo: 'ES-0002',
-                            quantia: 8.00,
-                            valor: 14.00,
-                        },
-                        {
-                            codigo: 'ES-0003',
-                            quantia: 14.00,
-                            valor: 3.99,
-                        },
-                    ],
-                },
+                            item_codigo: "ES-0001",
+                            quantia: 2
+                        }
+                    ]
+                }
             }
         }
     })
     @ApiResponse({
         status: 201,
-        description: 'Venda criada com sucesso.',
+        description: 'Venda criada com sucesso. Retorna o Cupom Fiscal.', // <- CORRIGIDO PARA REALIDADE DA APPLICATION
         schema: {
             example: {
-                id: 1,
+                id: 7,
+                dataVenda: "2026-06-11T18:28:08.764Z",
                 cliente: {
-                    id: 4,
-                    nome: 'João',
-                    sobrenome: 'Sales',
+                    id: 1,
+                    nome: "João",
+                    sobrenome: "Silva"
                 },
                 usuario: {
-                    id: 2,
-                    nome: 'Fulano',
-                    sobrenome: 'Pancho',
-                }
+                    id: 1,
+                    nome: "Administrador",
+                    sobrenome: "Sistema"
+                },
+                itens: [
+                    {
+                        codigo: "ES-0001",
+                        nome: "Teclado",
+                        quantia: 2,
+                        valorUnitario: 150.00,
+                        subTotal: 300.00
+                    }
+                ],
+                valorTotal: 300.00
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: Estoque insuficiente de um item ou quantia inválida).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Cliente ou Item informado não localizado.' })
     @HttpCode(HttpStatus.CREATED)
-    public async save(@Request() request: IdRequest, @Body() dto: VendaCreateDTO) {
-        dto.usuario_id = request.userId;
-
+    public async save(@Body() dto: VendaCreateDTO, @Request() req: IdRequest) {
+        dto.usuario_id = req.userId;
         return this.vendaApplication.save(dto);
     }
 
@@ -117,19 +125,24 @@ export class VendaController {
         schema: {
             example: {
                 id: 1,
-                cliente: {
-                    id: 4,
-                    nome: 'João',
-                    sobrenome: 'Sales',
-                },
+                dataVenda: "2026-06-11T18:28:08.764Z",
                 usuario: {
+                    id: 1,
+                    email: "admin@email.com",
+                    nome: "Administrador",
+                    sobrenome: "Sistema"
+                },
+                cliente: {
                     id: 2,
-                    nome: 'Fulano',
-                    sobrenome: 'Pancho',
+                    cpf: "12345678901",
+                    nome: "João",
+                    sobrenome: "Silva"
                 }
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'ID de venda não localizado.' })
     @HttpCode(HttpStatus.OK)
     public async show(@Param() { id }: IdDTO) {
         return this.vendaApplication.show(id);
@@ -154,23 +167,23 @@ export class VendaController {
         status: 200,
         description: 'Venda atualizada com sucesso.',
         schema: {
-            example:
-            {
+            example: { // <- CORRIGIDO DE ACORDO COM O OBJETO RETORNADO NA APPLICATION
                 id: 7,
-                cliente: {
-                    id: 1,
-                    nome: "João",
-                    sobrenome: "Silva"
-                },
                 usuario: {
                     id: 1,
                     nome: "Administrador",
-                    sobrenome: "Administrador"
+                    sobrenome: "Sistema"
                 },
-                dataVenda: "2026-06-11T18:28:08.764Z"
+                cliente: {
+                    id: 2,
+                    nome: "José",
+                    sobrenome: "Camargo"
+                }
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Venda ou Cliente novo não localizado.' })
     @HttpCode(HttpStatus.OK)
     public async update(@Param() { id }: IdDTO, @Body() dto: VendaUpdateDTO) {
         dto.id = id;
@@ -181,6 +194,8 @@ export class VendaController {
     @ApiOperation({ summary: 'Remove uma venda pelo ID' })
     @ApiParam({ name: 'id', description: 'ID da venda', type: Number, example: 1 })
     @ApiResponse({ status: 204, description: 'Venda removida com sucesso.' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'ID de venda não localizado.' })
     @HttpCode(HttpStatus.NO_CONTENT)
     public async delete(@Param() { id }: IdDTO) {
         return this.vendaApplication.delete(id);

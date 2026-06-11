@@ -29,8 +29,8 @@ export class ItemController {
                     {
                         codigo: 'ES-0001',
                         nome: "Teclado",
-                        quantia: 23.00,
-                        valor: 53.99,
+                        quantia: 10.00,
+                        valor: 150.00
                     }
                 ],
                 total: 1,
@@ -40,6 +40,7 @@ export class ItemController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado (Token ausente ou inválido).' })
     @HttpCode(HttpStatus.OK)
     public async findAll(@Query() dto: FindAllDTO) {
         return this.itemApplication.findAll(dto);
@@ -56,8 +57,8 @@ export class ItemController {
                 value: {
                     codigo: 'ES-0001',
                     nome: 'Teclado',
-                    quantia: 30.00,
-                    valor: 120.99
+                    quantia: 10,
+                    valor: 150.45
                 }
             }
         }
@@ -69,11 +70,13 @@ export class ItemController {
             example: {
                 codigo: 'ES-0001',
                 nome: 'Teclado',
-                quantia: 30.00,
-                valor: 120.99
+                quantia: 10.00,
+                valor: 150.45
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: Código já existente ou valores/quantias negativas).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
     @HttpCode(HttpStatus.CREATED)
     public async save(@Body() dto: ItemCreateDTO) {
         return this.itemApplication.save(dto);
@@ -81,7 +84,7 @@ export class ItemController {
 
     @Get(':codigo')
     @ApiOperation({ summary: 'Retorna os dados de um item específico pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' }) // <- CORRIGIDO PARA String
     @ApiResponse({
         status: 200,
         description: 'Item retornado com sucesso.',
@@ -89,11 +92,13 @@ export class ItemController {
             example: {
                 codigo: 'ES-0001',
                 nome: 'Teclado',
-                quantia: 0.00,
-                valor: 0.00,
+                quantia: 10.00,
+                valor: 150.45
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Item não localizado.' })
     @HttpCode(HttpStatus.OK)
     public async show(@Param() { codigo }: ItemShowDTO) {
         return this.itemApplication.show(codigo);
@@ -101,7 +106,7 @@ export class ItemController {
 
     @Put(':codigo')
     @ApiOperation({ summary: 'Atualiza os dados de um item pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' }) // <- CORRIGIDO PARA String
     @ApiBody({
         type: ItemUpdateDTO,
         description: 'Dados para atualização do item',
@@ -118,16 +123,19 @@ export class ItemController {
     })
     @ApiResponse({
         status: 200,
-        description: 'Item atualizado com sucesso.',
+        description: 'Item updated com sucesso.',
         schema: {
             example: {
                 codigo: 'ES-0001',
                 nome: 'Teclado #01',
-                quantia: 0.00,
-                valor: 0.00,
+                quantia: 34.00, // <- CORRIGIDO (estava fixo em 0.00)
+                valor: 19.90,   // <- CORRIGIDO (estava fixo em 0.00)
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: Nome vazio ou valores negativos).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Item não localizado.' })
     @HttpCode(HttpStatus.OK)
     public async update(@Param() { codigo }: ItemShowDTO, @Body() dto: ItemUpdateDTO) {
         dto.codigo = codigo;
@@ -136,8 +144,10 @@ export class ItemController {
 
     @Delete(':codigo')
     @ApiOperation({ summary: 'Remove um item pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' }) // <- CORRIGIDO PARA String
     @ApiResponse({ status: 204, description: 'Item removido com sucesso.' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Item não localizado.' })
     @HttpCode(HttpStatus.NO_CONTENT)
     public async delete(@Param() { codigo }: ItemShowDTO) {
         return this.itemApplication.delete(codigo);

@@ -1,7 +1,6 @@
 import { Controller, Get, Query, Post, Put, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody, ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { IdDTO } from "src/dto/id.dto";
-import { UsuarioCreateDTO } from "src/dto/usuario/usuario-create.dto";
 import { AuthGuard } from "src/guards/auth.guard";
 import { ClienteApplication } from "src/applications/cliente.application";
 import { FindAllDTO } from "src/dto/find-all.dto";
@@ -41,6 +40,7 @@ export class ClienteController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado (Token ausente ou inválido).' })
     @HttpCode(HttpStatus.OK)
     public async findAll(@Query() dto: FindAllDTO) {
         return this.clienteApplication.findAll(dto);
@@ -49,7 +49,7 @@ export class ClienteController {
     @Post('')
     @ApiOperation({ summary: 'Cria um novo cliente' })
     @ApiBody({ 
-        type: UsuarioCreateDTO, 
+        type: ClienteCreateDTO, // <- CORRIGIDO AQUI (antes estava UsuarioCreateDTO)
         description: 'Dados para criação do cliente',
         examples: {
             exemplo: {
@@ -74,6 +74,8 @@ export class ClienteController {
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: CPF não disponível para uso ou campos obrigatórios vazios).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
     @HttpCode(HttpStatus.CREATED)
     public async save(@Body() dto: ClienteCreateDTO) {
         return this.clienteApplication.save(dto);
@@ -94,6 +96,8 @@ export class ClienteController {
             }
         }
     })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Cliente não encontrado.' })
     @HttpCode(HttpStatus.OK)
     public async show(@Param() { id }: IdDTO) {
         return this.clienteApplication.show(id);
@@ -124,10 +128,13 @@ export class ClienteController {
                 id: 1,
                 cpf: '38274859391',
                 nome: 'José',
-                sobrenome: 'Carmargo'
+                sobrenome: 'Camargo' // <- CORRIGIDO AQUI (antes estava Carmargo)
             }
         }
     })
+    @ApiResponse({ status: 400, description: 'Requisição inválida (Ex: CPF não disponível para uso).' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Cliente não encontrado.' })
     @HttpCode(HttpStatus.OK)
     public async update(@Param() { id }: IdDTO, @Body() dto: ClienteUpdateDTO) {
         dto.id = id;
@@ -138,6 +145,8 @@ export class ClienteController {
     @ApiOperation({ summary: 'Remove um cliente pelo ID' })
     @ApiParam({ name: 'id', description: 'ID do cliente', type: Number, example: 1 })
     @ApiResponse({ status: 204, description: 'Cliente removido com sucesso.' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 404, description: 'Cliente não encontrado.' })
     @HttpCode(HttpStatus.NO_CONTENT)
     public async delete(@Param() { id }: IdDTO) {
         return this.clienteApplication.delete(id);
