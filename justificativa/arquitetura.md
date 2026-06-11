@@ -1,90 +1,40 @@
-# Banco de Dados
-## 1. Definição da Arquitetura
-### 1.1 Escolha Tecnológica
-* **Tipo de banco escolhido (SQL ou NoSQL)**: SQL
-* **Provedor utilizado (PostgreSQL, MySQL, SQL Server, MongoDB, Redis, DynamoDB, etc.)**: PostgreSQL
-* **Justificativa técnica da escolha**: PostgreSQL foi escolhido por ser um banco relacional robusto com total conformidade ACID, ideal para dados estruturados com relacionamentos bem definidos. Além do modelo relacional tradicional, oferece suporte nativo a JSON, o que adiciona flexibilidade sem abrir mão da consistência. É open-source, amplamente adotado em produção e conta com ecossistema maduro de ferramentas e integrações.
-### 1.2 Requisitos do Sistema
-Descrever:
-* **Objetivo do sistema**: Facilitar o gerenciamento financeiro do comércio;
-* **Principais entidades ou documentos**: Usuários, Itens e Vendas
-* **Volume estimado de dados**:
+# 1. Definição da Arquitetura
 
-Tamanho por linha
+## 1.1 Escolha Tecnológica
+- **Tipo de banco escolhido:** SQL (Relacional)
+- **Provedor utilizado:** PostgreSQL
+- **Justificativa técnica da escolha:** O sistema de vendas possui entidades fortemente relacionadas (Clientes, Usuários, Vendas e Itens) onde a consistência dos dados e o cumprimento das propriedades ACID (Atomicidade, Consistência, Isolamento e Durabilidade) são essenciais. Além disso, as consultas envolvem agregações e joins (ex: relatórios de vendas, itens por venda), o que é muito bem suportado e otimizado por bancos de dados relacionais. O PostgreSQL foi escolhido por ser open-source, robusto, altamente escalável e por possuir excelente suporte a transações e integridade referencial, além de se integrar perfeitamente ao TypeORM já utilizado no projeto.
 
-| Tabela | Colunas | Bytes/linha |
-|---|---|---|
-| `tb_usuarios` | integer(4) + varchar(100) + varchar(250) + varchar(50) + varchar(100) | 508 bytes |
-| `tb_clientes` | integer(4) + varchar(11) + varchar(50) + varchar(100) | 169 bytes |
-| `tb_itens` | varchar(25) + varchar(250) + decimal(8) + decimal(8) | 295 bytes |
-| `tb_vendas` | integer(4) + integer(4) + integer(4) + timestamp(8) | 24 bytes |
-| `tb_itens_vendas` | integer(4) + integer(4) + varchar(25) + decimal(8) + decimal(8) | 53 bytes |
+## 1.2 Requisitos do Sistema
+- **Objetivo do sistema:** Gerenciamento e organização das vendas e lucros de um negócio, permitindo o controle de clientes, usuários (funcionários), catálogo de itens e registro detalhado de cada venda realizada.
+- **Principais entidades:** `Cliente`, `Usuario`, `Item`, `Venda` e `ItemVenda`.
+- **Volume estimado de dados:** Espera-se um volume moderado a alto de inserções diárias na tabela de vendas e itens de vendas. Estima-se 10.000 a 50.000 registros de vendas por ano.
+- **Quantidade estimada de usuários:** 10 a 50 funcionários (usuários do sistema) simultâneos, além de uma base de milhares de clientes cadastrados.
+- **Principais consultas realizadas:**
+  - Relatório de vendas por período.
+  - Relatório de vendas por cliente.
+  - Cálculo do ticket médio e total arrecadado.
+  - Controle de estoque (quantia de itens vendidos vs disponíveis).
+  - Consulta do histórico de um cliente utilizando o CPF.
 
-## Volume por tabela
+# 3. Modelagem e Normalização
 
-| Tabela | Linhas | Subtotal |
-|---|---|---|
-| `tb_usuarios` | 2 | ~1 KB |
-| `tb_clientes` | 100 | ~16 KB |
-| `tb_itens` | 100 | ~29 KB |
-| `tb_vendas` | 1.000 | ~24 KB |
-| `tb_itens_vendas` | 3.000 | ~155 KB |
+- **1FN (Primeira Forma Normal):** Todos os atributos são atômicos. Por exemplo, os nomes e sobrenomes foram separados em colunas distintas (`nome` e `sobrenome`) nas tabelas de clientes e usuários. Não existem grupos repetitivos.
+- **2FN (Segunda Forma Normal):** O modelo está na 1FN e todos os atributos não-chave dependem totalmente das chaves primárias. A tabela `tb_itens_vendas` possui sua própria chave primária (`id`) e faz referência às chaves primárias de Venda e Item.
+- **3FN (Terceira Forma Normal):** O modelo está na 2FN e não existem dependências transitivas. Cada coluna não-chave depende exclusivamente da chave primária de sua tabela. Valores de preço na tabela `tb_itens_vendas` (valor) são copiados (históricos) da tabela `tb_itens` no momento da venda, garantindo que alterações futuras no preço do item não alterem o histórico de vendas passadas. Isso é uma prática padrão que não fere a normalização no contexto temporal/histórico, pois o valor no item-venda representa o "valor cobrado no momento da venda".
 
-**Total bruto: ~225 KB**
-**+ 30% overhead (índices, metadados): ~293 KB**
+**Desnormalização:** Não há desnormalizações aplicadas na base, uma vez que o volume de leitura e escrita atende bem ao modelo normalizado, onde os `JOIN`s resolvem as necessidades sem problemas de performance e o foco principal é garantir a integridade e evitar anomalias de atualização.
 
-> Volume estimado total: aproximadamente **300 KB**.
+# 4. Performance
 
-* **Quantidade estimada de usuários**: 2
-* **Principais consultas realizadas**:
-``` sql
--- Usuário realizando login
-SELECT * FROM TB_USUARIOS WHERE EMAIL = 'admin@email.com';
+## Estratégia de Indexação
 
--- Itens
----- Buscando todos os itens cadastrados
-SELECT * FROM TB_ITENS;
+Para garantir a performance nas consultas críticas, os seguintes índices foram propostos (detalhados também no DDL `scripts/setup.sql`):
 
----- Cadastrando um novo item
-INSERT INTO
-	PUBLIC.TB_ITENS (CODIGO, NOME, QUANTIA, VALOR)
-VALUES
-	('ES-0010', 'FITA DUREX', 23.00, 19.00);
-
-
--- Vendas
----- Buscar somente as vendas, sem os itens
-SELECT
-    V.ID AS ID,
-    (U.NOME || ' ' || U.SOBRENOME) AS VENDEDOR,
-    (C.NOME || ' ' || C.SOBRENOME) AS CLIENTE,
-    SUM(IV.QUANTIA * IV.VALOR) AS TOTAL_VENDA,
-    V.DATA_VENDA AS DATA_VENDA
-FROM
-    TB_VENDAS AS V
-    LEFT JOIN TB_USUARIOS AS U ON V.USUARIO_ID = U.ID
-    LEFT JOIN TB_CLIENTES AS C ON V.CLIENTE_ID = C.ID
-    LEFT JOIN TB_ITENS_VENDAS AS IV ON IV.VENDA_ID = V.ID
-GROUP BY
-    V.ID,
-    U.NOME,
-    U.SOBRENOME,
-    C.NOME,
-    C.SOBRENOME,
-    V.DATA_VENDA;
-
----- Buscar os itens de uma venda
-SELECT
-	IV.VENDA_ID AS VENDA,
-	IV.ID AS ID,
-	IV.ITEM_ID AS CODIGO_ITEM,
-	I.NOME AS ITEM,
-	IV.QUANTIA AS QUANTIA,
-	IV.VALOR AS VALOR,
-	(IV.QUANTIA * IV.VALOR) AS VALOR_TOTAL
-FROM
-	TB_ITENS_VENDAS AS IV
-	LEFT JOIN TB_ITENS AS I ON IV.ITEM_ID = I.CODIGO
-WHERE
-	VENDA_ID = 2;
-```
+| Campo | Tipo de Índice | Motivo |
+| :--- | :--- | :--- |
+| `cpf` (tb_clientes) | B-Tree (Unique) | Busca frequente de clientes por CPF, garantindo unicidade na tabela. |
+| `email` (tb_usuarios) | B-Tree (Unique) | Autenticação do sistema e busca rápida de usuários pelo e-mail. |
+| `data_venda` (tb_vendas)| B-Tree | Filtros essenciais para relatórios de vendas por período e ordenação. |
+| `cliente_id` (tb_vendas)| B-Tree (FK) | Agiliza os JOINs entre Vendas e Clientes para resgatar históricos. |
+| `venda_id` (tb_itens_vendas)| B-Tree (FK) | Otimiza o JOIN ao buscar rapidamente todos os itens de uma venda. |
