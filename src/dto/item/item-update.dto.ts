@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNull } from "typeorm";
 
 export class ItemUpdateDTO {
     codigo: string;
@@ -11,4 +12,17 @@ export class ItemUpdateDTO {
     })
     @IsOptional()
     nome: string;
+
+    @IsNumber({}, {
+        message: 'O campo quantia deve ser um número'
+    })
+    @IsOptional()
+    quantia: number;
+
+
+    @IsNumber({}, {
+        message: 'O campo valor deve ser um número'
+    })
+    @IsOptional()
+    valor: number;
 }

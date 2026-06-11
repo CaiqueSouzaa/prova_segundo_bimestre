@@ -16,6 +16,7 @@ export class ItemMapper {
         const item: Item = new Item();
 
         item.nome = dto.nome || dados.nome;
+        item.quantia = dto.quantia || dados.quantia;
 
         return item;
     }

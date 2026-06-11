@@ -108,6 +108,8 @@ export class ItemController {
                 summary: 'Exemplo de requisição',
                 value: {
                     nome: 'Teclado #01',
+                    quantia: 34,
+                    valor: 19.90
                 }
             }
         }

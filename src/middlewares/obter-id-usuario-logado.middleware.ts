@@ -12,8 +12,6 @@ export class ObterIdUsuarioLogadoMiddleware implements NestMiddleware {
     async use(req: IdRequest, res: Response, next: NextFunction) {
         const authorization = req.headers.authorization!;
 
-        console.log(req.headers);
-
         if (!authorization) {
             throw new UnauthorizedException();
         }

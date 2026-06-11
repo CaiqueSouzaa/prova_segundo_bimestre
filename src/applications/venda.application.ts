@@ -76,6 +76,11 @@ export class VendaApplication {
                 // Atribuindo o ID da venda na entidade ItemVenda
                 i.venda = savedVenda;
 
+                // Verificando se há estoque disponível para o item
+                if (i.quantia > item.quantia) {
+                    throw new Error(`Não há estoque o suficiente para o item [${ item.codigo }]. Estoque disponível [${ item.quantia }] - Solicitado [${ i.quantia }]`);
+                }
+
                 // Salvando a entidade ItemVenda
                 await this.itemVendaService.save(i, t);
             }

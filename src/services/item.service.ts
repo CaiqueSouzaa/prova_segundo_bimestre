@@ -115,6 +115,14 @@ export class ItemService {
             if (!dados.nome || dados.nome.length === 0) {
                 throw new Error('Nome de item não deve ser vázio');
             }
+
+            if (dados.quantia < 0) {
+                throw new Error('A quantia não deve ser inferior a 0.00');
+            }
+
+            if (dados.valor < 0) {
+                throw new Error('O valor não deve ser inferior a 0.00');
+            }
     
             return repository.save(dados);
         }
