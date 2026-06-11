@@ -83,6 +83,10 @@ export class VendaApplication {
 
                 // Salvando a entidade ItemVenda
                 await this.itemVendaService.save(i, t);
+
+                // Debitando o saldo do item
+                item.quantia = item.quantia - i.quantia;
+                await this.itemService.update(item);
             }
 
             delete (savedVenda.usuario as any).senha;
@@ -99,7 +103,7 @@ export class VendaApplication {
                         produto: i.item.nome,
                         quantia: i.quantia,
                         valor_unitario: i.valor,
-                        valor_total_item: i.quantia * i.valor,
+                        subtotal: i.quantia * i.valor,
                     };
                 }),
                 total: itens.map((i: ItemVenda) => i.quantia * i.valor).reduce((a, b) => a + b),
