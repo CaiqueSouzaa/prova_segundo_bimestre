@@ -1,9 +1,11 @@
-import { CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Cliente } from "./cliente";
 import { Usuario } from "./usuario";
 import { ItemVenda } from "./item-venda";
 
 @Entity('tb_vendas')
+@Index('idx_tb_vendas_data_venda', ['dataVenda'])
+@Index('idx_tb_vendas_cliente_id', ['cliente'])
 export class Venda {
     @PrimaryGeneratedColumn()
     id: number;

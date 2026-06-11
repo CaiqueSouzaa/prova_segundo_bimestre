@@ -38,7 +38,7 @@ SELECT
 FROM generate_series(1, 50) AS i;
 
 -- Inserir 100 Itens de Vendas (cerca de 2 itens por venda)
-INSERT INTO tb_itens_vendas (venda_id, item_id, quantia, valor)
+INSERT INTO tb_itens_vendas (venda_id, item_codigo, quantia, valor)
 SELECT 
     (MOD(i, 50) + 1), -- Referencia uma das 50 vendas
     'PROD-' || LPAD((MOD(i, 30) + 1)::text, 4, '0'), -- Referencia um dos 30 produtos

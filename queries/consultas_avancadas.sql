@@ -10,7 +10,7 @@ SELECT
 FROM tb_vendas v
 JOIN tb_clientes c ON v.cliente_id = c.id
 JOIN tb_itens_vendas iv ON iv.venda_id = v.id
-JOIN tb_itens i ON iv.item_id = i.codigo
+JOIN tb_itens i ON iv.item_codigo = i.codigo
 WHERE c.cpf = '00000000001'
 ORDER BY v.data_venda DESC;
 
@@ -24,6 +24,6 @@ SELECT
 FROM tb_vendas v
 LEFT JOIN tb_clientes c ON v.cliente_id = c.id
 LEFT JOIN tb_usuarios u ON v.usuario_id = u.id
-WHERE v.data_venda >= '2023-01-01 00:00:00' 
-  AND v.data_venda <= '2023-12-31 23:59:59'
+WHERE v.data_venda >= '2026-01-01 00:00:00' 
+  AND v.data_venda <= '2026-12-31 23:59:59'
 ORDER BY v.data_venda ASC;

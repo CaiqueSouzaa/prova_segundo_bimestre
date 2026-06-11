@@ -17,7 +17,7 @@ SELECT
     i.nome,
     SUM(iv.quantia) AS total_vendido
 FROM tb_itens_vendas iv
-JOIN tb_itens i ON iv.item_id = i.codigo
+JOIN tb_itens i ON iv.item_codigo = i.codigo
 GROUP BY i.codigo, i.nome
 ORDER BY total_vendido DESC
 LIMIT 10;
@@ -31,6 +31,6 @@ SELECT
     SUM(iv.quantia * iv.valor) AS total_arrecadado_pelo_vendedor
 FROM tb_usuarios u
 JOIN tb_vendas v ON v.usuario_id = u.id
-JOIN tb_itens_vendas iv ON v.venda_id = v.id
+JOIN tb_itens_vendas iv ON iv.venda_id = v.id
 GROUP BY u.id, u.nome, u.sobrenome
 ORDER BY total_arrecadado_pelo_vendedor DESC;

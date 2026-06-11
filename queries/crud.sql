@@ -10,7 +10,7 @@ SELECT * FROM tb_itens WHERE codigo = 'ITEM001';
 
 -- UPDATE (Atualização)
 UPDATE tb_itens SET valor = 59.90 WHERE codigo = 'ITEM001';
-UPDATE tb_clientes SET nome = 'João Paulo' WHERE id = 1;
+UPDATE tb_clientes SET nome = 'Flavio' WHERE id = 1;
 
 -- DELETE (Remoção)
 -- OBS: Vendas cadastradas para este cliente terão a FK definida como NULL devido ao ON DELETE SET NULL

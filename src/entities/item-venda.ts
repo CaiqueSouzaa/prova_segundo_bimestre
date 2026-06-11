@@ -1,8 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Venda } from "./venda";
 import { Item } from "./item";
 
 @Entity('tb_itens_vendas')
+@Index('idx_tb_itens_vendas_venda_id', ['venda'])
 export class ItemVenda {
     @PrimaryGeneratedColumn()
     id: number;

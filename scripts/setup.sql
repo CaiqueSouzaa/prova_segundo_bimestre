@@ -1,5 +1,8 @@
 -- DDL - Script de criação das tabelas, constraints e índices
 
+-- Deletar todas as tabelas
+DROP TABLE IF EXISTS tb_itens_vendas, tb_vendas, tb_itens, tb_usuarios, tb_clientes;
+
 CREATE TABLE tb_clientes (
     id SERIAL PRIMARY KEY,
     cpf VARCHAR(14) NOT NULL UNIQUE,
@@ -32,7 +35,7 @@ CREATE TABLE tb_vendas (
 CREATE TABLE tb_itens_vendas (
     id SERIAL PRIMARY KEY,
     venda_id INTEGER REFERENCES tb_vendas(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    item_id VARCHAR(50) REFERENCES tb_itens(codigo) ON DELETE CASCADE ON UPDATE CASCADE,
+    item_codigo VARCHAR(50) REFERENCES tb_itens(codigo) ON DELETE CASCADE ON UPDATE CASCADE,
     quantia DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     valor DECIMAL(10, 2) NOT NULL DEFAULT 0.00
 );
