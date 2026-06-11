@@ -174,7 +174,25 @@ export class VendaApplication {
                 await this.clienteService.show(toUpdate.cliente.id, t);
             }
 
-            return await this.vendaService.update(toUpdate, t);
+            const updated: Venda = await this.vendaService.update(toUpdate, t);
+            const response = {
+                id: updated.id,
+                usuario: {
+                    id: updated.usuario.id,
+                    nome: updated.usuario.nome,
+                    sobrenome: updated.usuario.sobrenome,
+                }
+            };
+
+            if (updated.cliente) {
+                (response as any).cliente = {
+                    id: updated.cliente.id,
+                    nome: updated.cliente.nome,
+                    sobrenome: updated.cliente.sobrenome,
+                }
+            }
+
+            return response;
         });
     }
 
