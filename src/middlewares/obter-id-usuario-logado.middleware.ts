@@ -31,8 +31,6 @@ export class ObterIdUsuarioLogadoMiddleware implements NestMiddleware {
             sobrenome: string,
         } = this.jwtService.decode(token);
 
-        console.log(decoded);
-
         req.userId = decoded.id;
 
         next();
