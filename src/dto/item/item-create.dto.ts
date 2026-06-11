@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class ItemCreateDTO {
     @IsString({
@@ -16,4 +16,17 @@ export class ItemCreateDTO {
         message: 'O campo nome é obrigatório e não deve ser vázio'
     })
     nome: string;
+
+    @IsNumber({}, {
+        message: 'O campo quantia deve ser um número'
+    })
+    @IsOptional()
+    quantia: number;
+
+
+    @IsNumber({}, {
+        message: 'O campo valor deve ser um número'
+    })
+    @IsOptional()
+    valor: number;
 }

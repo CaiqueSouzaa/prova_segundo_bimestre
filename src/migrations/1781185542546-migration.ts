@@ -16,6 +16,38 @@ export class Migration1781185542546 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "tb_vendas" ADD CONSTRAINT "FK_126b68e377763ccb959bbcb77d0" FOREIGN KEY ("usuario_id") REFERENCES "tb_usuarios"("id") ON DELETE SET NULL ON UPDATE SET NULL`);
         await queryRunner.query(`ALTER TABLE "tb_itens_vendas" ADD CONSTRAINT "FK_cfb0050730f3224a956ccbb283a" FOREIGN KEY ("venda_id") REFERENCES "tb_vendas"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "tb_itens_vendas" ADD CONSTRAINT "FK_0555c2ce71605359d39e522f042" FOREIGN KEY ("item_id") REFERENCES "tb_itens"("codigo") ON DELETE CASCADE ON UPDATE CASCADE`);
+
+        await queryRunner.query(`
+            INSERT INTO
+                TB_USUARIOS (EMAIL, SENHA, NOME, SOBRENOME)
+            VALUES
+                (
+                    'admin@email.com',
+                    '$2b$12$23Ki2BsMeAZDBaDEwLvE8uhQVqTNFQRBBiFN2ARu0DybdBmfUIZn.',
+                    'Administrador',
+                    'Administrador'
+                ), (
+                    'caique@email.com',
+                    '$2b$12$z.IAFJL1/wjgcJ7kuZBH7uD64SPWYD2TGn8i6UUmrqpw5UzUOP3pa',
+                    'Caique',
+                    'Souza'
+                ), (
+                    'fulano@email.com',
+                    '$2a$12$oeMbiZbbhLZ8s3kZPFiru.fIdw5VlwV7dlItBy0beMPRI5JnSCYuq',
+                    'Fulano',
+                    'Carmo'
+                ), (
+                    'joaquin@email.com',
+                    '$2a$12$Ppjy/5aI5Ln/l7TQNi/.GuH.bKHAhEmqvp4abp7u8.ms1Nq3G2L.m',
+                    'Joaquin',
+                    'Gonzales'
+                ), (
+                    'rodolfo@email.com',
+                    '$2a$12$3VgwnbKPdlnlShgUEi5yEOF4F52bsDyrLXlUP5w3XWgYyjMGNJo/i',
+                    'Rodolfo',
+                    'Luneta'
+                );`
+        );
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

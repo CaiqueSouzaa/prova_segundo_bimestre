@@ -9,7 +9,7 @@ import { AuthGuard } from "src/guards/auth.guard";
 
 @UseGuards(AuthGuard)
 @ApiTags('Items')
-@ApiBearerAuth('JWT-auth') 
+@ApiBearerAuth('JWT-auth')
 @Controller('itens')
 export class ItemController {
     constructor(
@@ -55,7 +55,9 @@ export class ItemController {
                 summary: 'Exemplo de requisição',
                 value: {
                     codigo: 'ES-0001',
-                    nome: 'Teclado'
+                    nome: 'Teclado',
+                    quantia: 30.00,
+                    valor: 120.99
                 }
             }
         }
@@ -67,8 +69,8 @@ export class ItemController {
             example: {
                 codigo: 'ES-0001',
                 nome: 'Teclado',
-                quantia: 0.00,
-                valor: 0.00,
+                quantia: 30.00,
+                valor: 120.99
             }
         }
     })
@@ -79,7 +81,7 @@ export class ItemController {
 
     @Get(':codigo')
     @ApiOperation({ summary: 'Retorna os dados de um item específico pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 1 })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
     @ApiResponse({
         status: 200,
         description: 'Item retornado com sucesso.',
@@ -99,7 +101,7 @@ export class ItemController {
 
     @Put(':codigo')
     @ApiOperation({ summary: 'Atualiza os dados de um item pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 1 })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
     @ApiBody({
         type: ItemUpdateDTO,
         description: 'Dados para atualização do item',
@@ -134,7 +136,7 @@ export class ItemController {
 
     @Delete(':codigo')
     @ApiOperation({ summary: 'Remove um item pelo código' })
-    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 1 })
+    @ApiParam({ name: 'codigo', description: 'Código do item', type: String, example: 'ES-0001' })
     @ApiResponse({ status: 204, description: 'Item removido com sucesso.' })
     @HttpCode(HttpStatus.NO_CONTENT)
     public async delete(@Param() { codigo }: ItemShowDTO) {

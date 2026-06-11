@@ -9,6 +9,14 @@ export class ItemMapper {
         item.codigo = dto.codigo
         item.nome = dto.nome;
 
+        if (dto.quantia && dto.quantia > 0) {
+            item.quantia = dto.quantia;
+        }
+
+        if (dto.valor && dto.valor > 0) {
+            item.valor = dto.valor;
+        }
+
         return item;
     }
 
@@ -17,6 +25,7 @@ export class ItemMapper {
 
         item.nome = dto.nome || dados.nome;
         item.quantia = dto.quantia || dados.quantia;
+        item.valor = dto.valor || dados.valor;
 
         return item;
     }
