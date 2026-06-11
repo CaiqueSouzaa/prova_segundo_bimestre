@@ -1,14 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { VendaApplication } from "src/applications/venda.application";
 import { FindAllDTO } from "src/dto/find-all.dto";
 import { IdDTO } from "src/dto/id.dto";
 import { VendaCreateDTO } from "src/dto/venda/venda-create.dto";
+import { VendaUpdateDTO } from "src/dto/venda/venda-update.dto";
 import { AuthGuard } from "src/guards/auth.guard";
 import type { IdRequest } from "src/interfaces/id-request";
 
 @UseGuards(AuthGuard)
-@ApiBearerAuth('JWT-auth') 
+@ApiBearerAuth('JWT-auth')
 @Controller('vendas')
 export class VendaController {
     constructor(
@@ -132,6 +133,48 @@ export class VendaController {
     @HttpCode(HttpStatus.OK)
     public async show(@Param() { id }: IdDTO) {
         return this.vendaApplication.show(id);
+    }
+
+    @Put(':id')
+    @ApiOperation({ summary: 'Atualiza os dados de uma venda pelo ID' })
+    @ApiParam({ name: 'id', description: 'ID da venda', type: Number, example: 1 })
+    @ApiBody({
+        type: VendaUpdateDTO,
+        description: 'Dados para atualização da venda',
+        examples: {
+            exemplo: {
+                summary: 'Exemplo de requisição',
+                value: {
+                    cliente_id: 2,
+                }
+            }
+        }
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Venda atualizada com sucesso.',
+        schema: {
+            example:
+            {
+                id: 7,
+                cliente: {
+                    id: 1,
+                    nome: "João",
+                    sobrenome: "Silva"
+                },
+                usuario: {
+                    id: 1,
+                    nome: "Administrador",
+                    sobrenome: "Administrador"
+                },
+                dataVenda: "2026-06-11T18:28:08.764Z"
+            }
+        }
+    })
+    @HttpCode(HttpStatus.OK)
+    public async update(@Param() { id }: IdDTO, @Body() dto: VendaUpdateDTO) {
+        dto.id = id;
+        return this.vendaApplication.update(dto);
     }
 
     @Delete(':id')

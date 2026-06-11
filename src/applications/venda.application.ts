@@ -1,11 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { FindAllDTO } from "src/dto/find-all.dto";
 import { VendaCreateDTO } from "src/dto/venda/venda-create.dto";
+import { VendaUpdateDTO } from "src/dto/venda/venda-update.dto";
 import { Cliente } from "src/entities/cliente";
 import { Item } from "src/entities/item";
 import { ItemVenda } from "src/entities/item-venda";
 import { Usuario } from "src/entities/usuario";
 import { Venda } from "src/entities/venda";
+import { CupomFiscal } from "src/interfaces/cupom-fiscal";
 import { Page } from "src/interfaces/page";
 import { ItemVendaMapper } from "src/mappers/item-venda.mapper";
 import { VendaMapper } from "src/mappers/venda.mapper";
@@ -78,7 +80,7 @@ export class VendaApplication {
 
                 // Verificando se há estoque disponível para o item
                 if (i.quantia > item.quantia) {
-                    throw new Error(`Não há estoque o suficiente para o item [${ item.codigo }]. Estoque disponível [${ item.quantia }] - Solicitado [${ i.quantia }]`);
+                    throw new Error(`Não há estoque o suficiente para o item [${item.codigo}]. Estoque disponível [${item.quantia}] - Solicitado [${i.quantia}]`);
                 }
 
                 // Salvando a entidade ItemVenda
@@ -115,18 +117,66 @@ export class VendaApplication {
         });
     }
 
-    public async show(id: number): Promise<Venda> {
+    public async show(id: number) {
         return await this.dataSource.manager.transaction(async (t) => {
-            const item = await this.vendaService.show(id, t);
+            const venda = await this.vendaService.show(id, t);
 
-            delete (item.usuario as any).email;
-            delete (item.usuario as any).senha;
+            // Buscando por todos os itens da venda em questão
+            const itensVenda: ItemVenda[] = await this.itemVendaService.findByVendaId(id, t);
 
-            if (item.cliente) {
-                delete (item.cliente as any).cpf;
+
+            delete (venda.usuario as any).email;
+            delete (venda.usuario as any).senha;
+
+            if (venda.cliente) {
+                delete (venda.cliente as any).cpf;
             }
 
-            return item;
+            const itensCupom = itensVenda.map(i => {
+                return {
+                    produto: i.item.nome,
+                    quantia: i.quantia,
+                    valor_unitario: i.valor,
+                    subtotal: i.quantia * i.valor,
+                };
+            });
+
+            const cupomFiscal: CupomFiscal = {
+                id: venda.id,
+                itens: itensCupom,
+                total: itensCupom.map(i => i.subtotal).reduce((a, b) => a + b),
+                vendedor: {
+                    nome: venda.usuario.nome,
+                    sobrenome: venda.usuario.sobrenome,
+                }
+            };
+
+            // Se a venda tiver cliente, adicionar o cliente no cupom fiscal
+            if (venda.cliente) {
+                cupomFiscal.cliente = {
+                    nome: venda.cliente.nome,
+                    sobrenome: venda.cliente.sobrenome,
+                }
+            }
+
+            return cupomFiscal;
+        });
+    }
+
+    public async update(dto: VendaUpdateDTO) {
+        return await this.dataSource.manager.transaction(async (t) => {
+            // Verificando se o ID de venda existe
+            const venda: Venda = await this.vendaService.show(dto.id, t);
+            const toUpdate: Venda = VendaMapper.updateToEntity(dto, venda);
+
+            // Se a DTO possuir ID de cliente, verificar se o cliente existe
+            if (toUpdate.cliente.id) {
+                await this.clienteService.show(toUpdate.cliente.id, t);
+            }
+
+            console.log(toUpdate);
+
+            return await this.vendaService.update(toUpdate, t);
         });
     }
 

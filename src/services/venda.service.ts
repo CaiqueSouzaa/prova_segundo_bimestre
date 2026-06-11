@@ -74,6 +74,19 @@ export class VendaService {
         return venda;
     }
 
+    public async update(dados: Venda, transaction?: EntityManager): Promise<Venda> {
+        if (!dados.id) {
+            throw new Error('ID de venda é obrigatório');
+        }
+        
+        if (!dados.usuario || !dados.usuario.id) {
+            throw new Error('ID de usuario não deve ser vázio');
+        }
+
+        const repository = this.getRepository(transaction);
+        return repository.save(dados);
+    }
+
     public async delete(id: number, transaction?: EntityManager): Promise<void> {
         const repository = this.getRepository(transaction);
         if (!id) {

@@ -20,6 +20,31 @@ export class ItemVendaService {
         return this.repository;
     }
 
+    public async findByVendaId(id: number, transaction?: EntityManager): Promise<ItemVenda[]> {
+        const repository = this.getRepository(transaction);
+
+        return repository.find({
+            where: {
+                venda: {
+                    id: id,
+                },
+            },
+            relations: {
+                venda: true,
+                item: true
+            },
+            select: {
+                venda: {
+                    id: true,
+                },
+                item: {
+                    codigo: true,
+                    nome: true
+                }
+            }
+        });
+    }
+
     public async findAll(transaction?: EntityManager): Promise<ItemVenda[]> {
         const repository = this.getRepository(transaction);
 
