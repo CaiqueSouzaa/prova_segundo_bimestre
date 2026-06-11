@@ -10,11 +10,11 @@ export class Venda {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Cliente, { onDelete: 'SET NULL', onUpdate: 'SET NULL' })
+    @ManyToOne(() => Cliente, { nullable: true, onDelete: 'SET NULL', onUpdate: 'SET NULL' })
     @JoinColumn({
         name: 'cliente_id',
     })
-    cliente: Cliente;
+    cliente: Cliente | null;
 
     @ManyToOne(() => Usuario, { onDelete: 'SET NULL', onUpdate: 'SET NULL' })
     @JoinColumn({

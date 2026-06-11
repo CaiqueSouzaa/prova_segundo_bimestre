@@ -24,20 +24,25 @@ export class VendaMapper {
 
     static updateToEntity(dto: VendaUpdateDTO, saved: Venda): Venda {
         const venda: Venda = new Venda();
-        const cliente: Cliente = new Cliente();
-        
-        if (dto.cliente_id) {
-            cliente.id = dto.cliente_id;
-        } else if (saved.cliente) {
-            cliente.id = saved.cliente.id;
-        }
 
         venda.id = saved.id;
         venda.dataVenda = saved.dataVenda;
         venda.itens = saved.itens;
         venda.usuario = saved.usuario;
 
-        venda.cliente = cliente;
+        if (dto.cliente_id !== undefined) {
+            // cliente_id presente no body: null = remover, número = definir
+            if (dto.cliente_id === null) {
+                venda.cliente = null;
+            } else {
+                const cliente: Cliente = new Cliente();
+                cliente.id = dto.cliente_id;
+                venda.cliente = cliente;
+            }
+        } else {
+            // cliente_id ausente no body: mantém o cliente atual
+            venda.cliente = saved.cliente ?? null;
+        }
 
         return venda;
     }

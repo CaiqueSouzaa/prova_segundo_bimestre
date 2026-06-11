@@ -78,13 +78,17 @@ export class VendaService {
         if (!dados.id) {
             throw new Error('ID de venda é obrigatório');
         }
-        
-        if (!dados.usuario || !dados.usuario.id) {
-            throw new Error('ID de usuario não deve ser vázio');
-        }
 
         const repository = this.getRepository(transaction);
-        return repository.save(dados);
+
+        // Atualiza somente o campo cliente_id da venda
+        await repository.createQueryBuilder()
+            .update(Venda)
+            .set({ cliente: dados.cliente ?? null })
+            .where('id = :id', { id: dados.id })
+            .execute();
+
+        return this.show(dados.id, transaction);
     }
 
     public async delete(id: number, transaction?: EntityManager): Promise<void> {

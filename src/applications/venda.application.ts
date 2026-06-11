@@ -169,12 +169,10 @@ export class VendaApplication {
             const venda: Venda = await this.vendaService.show(dto.id, t);
             const toUpdate: Venda = VendaMapper.updateToEntity(dto, venda);
 
-            // Se a DTO possuir ID de cliente, verificar se o cliente existe
-            if (toUpdate.cliente.id) {
+            // Se a entidade possuir um cliente com ID, verificar se ele existe
+            if (toUpdate.cliente?.id) {
                 await this.clienteService.show(toUpdate.cliente.id, t);
             }
-
-            console.log(toUpdate);
 
             return await this.vendaService.update(toUpdate, t);
         });
