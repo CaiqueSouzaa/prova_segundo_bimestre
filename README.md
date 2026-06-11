@@ -205,6 +205,16 @@ docker compose down -v --rmi local
 
 ---
 
+# Banco de Dados
+ 
+Todos os requisitos técnicos solicitados foram implementados e organizados conforme a estrutura de pastas especificada:
+ 
+- **Arquitetura, justificativa técnica e normalização:** `./justificativa/arquitetura.md`
+- **Modelagem** (DER, modelo lógico e dicionário de dados): `./modelagem/`
+- **Scripts DDL** (criação de tabelas, constraints e índices): `./scripts/setup.sql`
+- **Seed** (carga inicial com mais de 100 registros): `./scripts/seed/seed.sql`
+- **Queries** (CRUD, consultas avançadas e agregações): `./queries/`
+
 # Desenvolvimento Web
 * **Descrição do sistema de APIs**
 * **Entidades, tabelas e relacionamentos**
