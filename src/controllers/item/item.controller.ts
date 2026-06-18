@@ -8,7 +8,7 @@ import { ItemUpdateDTO } from "src/dto/item/item-update.dto";
 import { AuthGuard } from "src/guards/auth.guard";
 
 @UseGuards(AuthGuard)
-@ApiTags('Items')
+@ApiTags('Itens')
 @ApiBearerAuth('JWT-auth')
 @Controller('itens')
 export class ItemController {
