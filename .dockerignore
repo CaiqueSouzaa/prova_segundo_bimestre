@@ -4,3 +4,6 @@ modelagem
 test
 README.md
 .gitignore
+queries
+scripts
+.env.example
