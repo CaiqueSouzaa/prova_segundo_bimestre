@@ -38,3 +38,10 @@ Para garantir a performance nas consultas críticas, os seguintes índices foram
 | `data_venda` (tb_vendas)| B-Tree | Filtros essenciais para relatórios de vendas por período e ordenação. |
 | `cliente_id` (tb_vendas)| B-Tree (FK) | Agiliza os JOINs entre Vendas e Clientes para resgatar históricos. |
 | `venda_id` (tb_itens_vendas)| B-Tree (FK) | Otimiza o JOIN ao buscar rapidamente todos os itens de uma venda. |
+
+# 5. Segurança e Gestão de Credenciais
+
+## Configuração do arquivo .env
+Para manter o projeto seguro e modular, todas as credenciais de acesso ao PostgreSQL e configurações sensíveis são isoladas em um arquivo `.env`.
+- As chaves de conexão (como `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD` e `DB_DATABASE`) não ficam expostas no código fonte.
+- O arquivo `.env` é consumido tanto pela aplicação principal quanto pelos scripts de automação. Por exemplo, o script de inicialização do banco (`scripts/init-collection.js`) lê dinamicamente essas credenciais para conectar via driver `pg` do Node.js, garantindo que a execução dos arquivos `setup.sql` e `seed.sql` ocorra de forma automatizada e segura.

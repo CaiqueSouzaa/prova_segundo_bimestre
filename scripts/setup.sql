@@ -5,14 +5,14 @@ DROP TABLE IF EXISTS tb_itens_vendas, tb_vendas, tb_itens, tb_usuarios, tb_clien
 
 CREATE TABLE tb_clientes (
     id SERIAL PRIMARY KEY,
-    cpf VARCHAR(14) NOT NULL UNIQUE,
+    cpf VARCHAR(14) NOT NULL,
     nome VARCHAR(100) NOT NULL,
     sobrenome VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE tb_usuarios (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(150) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL,
     senha VARCHAR(255) NOT NULL,
     nome VARCHAR(100) NOT NULL,
     sobrenome VARCHAR(100) NOT NULL
@@ -41,6 +41,8 @@ CREATE TABLE tb_itens_vendas (
 );
 
 -- Criação dos Índices de Performance
+CREATE UNIQUE INDEX idx_tb_clientes_cpf ON tb_clientes(cpf);
+CREATE UNIQUE INDEX idx_tb_usuarios_email ON tb_usuarios(email);
 CREATE INDEX idx_tb_vendas_data_venda ON tb_vendas(data_venda);
 CREATE INDEX idx_tb_vendas_cliente_id ON tb_vendas(cliente_id);
 CREATE INDEX idx_tb_itens_vendas_venda_id ON tb_itens_vendas(venda_id);

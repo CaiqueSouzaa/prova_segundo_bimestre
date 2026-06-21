@@ -214,6 +214,7 @@ Todos os requisitos técnicos solicitados foram implementados e organizados conf
 - **Scripts DDL** (criação de tabelas, constraints e índices): `./scripts/setup.sql`
 - **Seed** (carga inicial com mais de 100 registros): `./scripts/seed/seed.sql`
 - **Queries** (CRUD, consultas avançadas e agregações): `./queries/`
+- **Inicialização Automática e Segurança (.env):** O script `scripts/init-collection.js` utiliza o driver `pg` para automatizar a leitura do arquivo `.env` e a execução sequencial do `setup.sql` e `seed.sql`, de forma segura e parametrizada.
 
 # Desenvolvimento Web
 * **Descrição do sistema de APIs**

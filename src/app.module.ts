@@ -3,7 +3,6 @@ import { UsuarioApplicationModule } from './modules/usuario/usuario-application.
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthApplicationModule } from './modules/auth/auth-application.module';
-import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ClienteApplicationModule } from './modules/cliente/cliente-application.module';
 import { ItemApplicationModule } from './modules/item/item-application.module';
 import { VendaApplicationModule } from './modules/venda/venda-application.module';
