@@ -10,19 +10,14 @@
  *   node command.js <comando>
  */
 
-const { execSync } = require('child_process');
+const { migrateCommand } = require('./commands/migrate.command');
+const { migrationGenerateCommand } = require('./commands/migration-generate.command');
 
 const [, , command, ...args] = process.argv;
 
 const commands = {
-  migrate: () => {
-    console.log('▶  Executando migrations...');
-    execSync(
-      'npx typeorm-ts-node-commonjs migration:run -d src/data-source.ts',
-      { stdio: 'inherit' },
-    );
-    console.log('✔  Migrations executadas com sucesso.');
-  },
+  migrate: migrateCommand,
+  "migration:generate": migrationGenerateCommand
 };
 
 if (!command) {

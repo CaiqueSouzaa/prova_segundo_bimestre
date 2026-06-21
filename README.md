@@ -223,6 +223,36 @@ Todos os requisitos técnicos solicitados foram implementados e organizados conf
 * **CRUD completo das entidades principais**
 * **Containers utilizados no projeto**
 
+## Configurações do projeto
+
+Para que a aplicação inicie corretamente, é necessário configurar o arquivo `.env`:
+
+1. Copie (ou renomeie) o arquivo `.env.example` para `.env`:
+```bash
+   cp .env.example .env
+```
+2. Substitua os valores das variáveis pelos dados de conexão do seu banco de dados.
+
+> ℹ️ Se a aplicação for executada via Docker, o banco de dados e o usuário são criados automaticamente, não havendo necessidade de criá-los previamente. Caso a execução seja feita **fora do Docker**, é necessário que o banco e o usuário já existam antes de iniciar a aplicação.
+
+### Exemplo
+
+```bash
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=db_vendas
+DB_USERNAME=vendas_user
+DB_PASSWORD=sua_senha_aqui
+
+JWT_SECRET=sua_chave_secreta_aqui
+```
+
+> ⚠️ Nunca utilize esses valores em produção e certifique-se de que o `.env` está listado no `.gitignore` para não ser versionado.
+
+### Migrations
+
+As migrations são executadas automaticamente na inicialização do servidor, não sendo necessária a execução manual. Caso deseje executá-las manualmente, o comando está disponível ao final do tópico "Desenvolvimento Web".
+
 ## Entrypoints e Commands
 
 O projeto possui dois entrypoints definidos na raiz:
@@ -254,6 +284,7 @@ node command.js <comando>
 | Comando | Descrição |
 |---|---|
 | `migrate` | Executa todas as migrations pendentes no banco de dados |
+| `migration:generate` | Realiza a criação de uma nova migration para o banco de dados |
 
 #### Exemplos de uso
 
@@ -287,15 +318,26 @@ Após obter o token, inclua-o nas requisições protegidas via header:
 Authorization: Bearer <seu_token_aqui>
 ```
 
-## Rota da documentação Swagger
+## Documentação Swagger
 
 A documentação interativa da API está disponível em:
 
-```
-http://localhost/api-docs
-```
+[http://localhost/api-docs](http://localhost/api-docs)
 
-Gerada automaticamente pelo `@nestjs/swagger` a partir das anotações nos controllers. Permite testar todas as rotas diretamente pelo navegador.
+Gerada automaticamente pelo `@nestjs/swagger` a partir das anotações nos controllers, permite visualizar e testar todas as rotas diretamente pelo navegador.
+
+### Autenticação para testes
+
+Para testar as rotas protegidas, utilize as credenciais do usuário administrador seedado em ambiente de desenvolvimento:
+
+| Campo | Valor |
+|---|---|
+| Email | `admin@email.com` |
+| Senha | `Admin@123` |
+
+> ⚠️ Essas credenciais devem existir **apenas em ambiente local/desenvolvimento** (via seed do banco). Nunca utilize essa combinação de email/senha em produção.
+
+Após obter o token de sessão, copie-o e insira no campo **Authorize → Value**. Não é necessário incluir o prefixo `Bearer`, pois o Swagger o adiciona automaticamente.
 
 ## Como executar o projeto com Docker
 
@@ -320,8 +362,9 @@ docker compose down -v
 node command.js migrate
 ```
 
-### Criar uma nova migration
+### Como criar uma nova migration
 
 ```bash
-npm run migration:generate
+# Cria uma nova migration
+node command.js migration:generate
 ```

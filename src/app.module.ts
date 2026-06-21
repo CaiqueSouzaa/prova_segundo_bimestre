@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { runSeeds } from './seeds/seed';
 import { UsuarioApplicationModule } from './modules/usuario/usuario-application.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -40,4 +42,10 @@ import { VendaApplicationModule } from './modules/venda/venda-application.module
   providers: [],
   exports: [],
 })
-export class AppModule { }
+export class AppModule implements OnModuleInit {
+  constructor(private dataSource: DataSource) {}
+
+  async onModuleInit() {
+    await runSeeds(this.dataSource);
+  }
+}
