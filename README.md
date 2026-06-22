@@ -258,6 +258,9 @@ docker volume rm $(docker volume ls -qf dangling=true)
 # Remove imagens não utilizadas
 docker image prune -a -f
 
+# Remove a stack
+docker stack rm app_segundo_bimestre
+
 # Remove as secrets
 docker secret rm db_database
 docker secret rm db_password
