@@ -7,13 +7,25 @@ networks:
 volumes:
   postgres-data:
 
+secrets:                          # ← 1. declarar as secrets globalmente
+  db_password:
+    external: true
+  db_username:
+    external: true
+  db_database:
+    external: true
+
 services:
   postgres:
     image: postgres:17
     environment:
-      - POSTGRES_PASSWORD=/run/secrets/db_password
-      - POSTGRES_USER=/run/secrets/db_username
-      - POSTGRES_DB=/run/secrets/db_database
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password   # ← 2. usar _FILE
+      - POSTGRES_USER_FILE=/run/secrets/db_username
+      - POSTGRES_DB_FILE=/run/secrets/db_database
+    secrets:                      # ← 3. montar as secrets no serviço
+      - db_password
+      - db_username
+      - db_database
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
