@@ -160,7 +160,7 @@ docker stack rm app_segundo_bimestre
 
 ### 6.1 Verificar containers em execução
 
-Confirme que todos os 4 serviços (`postgres`, `node`, `nginx`, `pgadmin`) estão com status **Up**:
+Confirme que todos os 3 serviços (`postgres`, `node`, `nginx`) estão com status **Up**:
 
 ```bash
 docker compose ps
@@ -172,7 +172,6 @@ Saída esperada:
 NAME                      STATUS          PORTS
 prova_segundo_bimestre-nginx-1      Up      0.0.0.0:80->80/tcp
 prova_segundo_bimestre-node-1       Up
-prova_segundo_bimestre-pgadmin-1    Up      0.0.0.0:8090->80/tcp
 prova_segundo_bimestre-postgres-1   Up      5432/tcp
 ```
 
