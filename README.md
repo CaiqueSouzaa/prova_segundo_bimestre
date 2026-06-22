@@ -126,7 +126,7 @@ Utilize os mesmos valores salvos no arquivo `.env`.
 
 Nome do banco de dados:
 ```bash
-echo -n "prova" | docker secret create db_database -
+echo -n "db_vendas_example" | docker secret create db_database -
 ```
 
 Usuário do banco de dados:
@@ -245,6 +245,17 @@ docker compose down -v
 # Remove também as imagens buildadas localmente
 docker compose down -v --rmi local
 
+# Remove a stack
+docker stack rm app_segundo_bimestre
+
+# Remove as secrets
+docker secret rm db_database
+docker secret rm db_password
+docker secret rm db_username
+
+# Sair do Docker Swarm
+docker swarm leave --force
+
 # Remove networks não utilizadas
 docker network prune -f
 
@@ -256,17 +267,6 @@ docker volume rm $(docker volume ls -qf dangling=true)
 
 # Remove imagens não utilizadas
 docker image prune -a -f
-
-# Remove a stack
-docker stack rm app_segundo_bimestre
-
-# Remove as secrets
-docker secret rm db_database
-docker secret rm db_password
-docker secret rm db_username
-
-# Sair do Docker Swarm
-docker swarm leave --force
 ```
 
 
