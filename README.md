@@ -10,53 +10,6 @@
 
 ## 3. Guia de Instalação e Execução ("How to Up")
 
-**Pré-requisito:** Docker Desktop instalado e em execução.
-
-```bash
-# 1. Clone o repositório
-git clone <url-do-repositório>
-
-# 2. Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o .env com suas credenciais reais
-
-# 3. Sincronize o arquivo de senha do pgAdmin
-cp pgadmin/pbpass.example pgadmin/pgpass
-# Edite pgadmin/pgpass com os mesmos valores de DB_USERNAME e DB_PASSWORD do .env
-
-# Certifique-se de que o nome de usuário do banco de dados salvo em "pgadmin/servers.json" corresponde exatamente do "DB_USERNAME"
-
-# 4. Suba toda a infraestrutura (build + start + migrations)
-docker compose up -d --build
-```
-
-> Após a execução, a API estará disponível em `http://localhost` e a documentação em `http://localhost/api-docs`.
-
-## 4. Detalhamento Técnico da Infraestrutura
-
-### Otimização de Imagens
-O `Dockerfile` da aplicação utiliza **Multi-stage build** com a imagem leve `node:26-alpine`:
-- **Stage 1 (`builder`):** instala todas as dependências e compila o TypeScript (`npm run build`)
-- **Stage 2 (`runner`):** copia apenas `dist/`, `node_modules/` e `server.js` — descartando os arquivos de desenvolvimento e reduzindo significativamente o tamanho final da imagem
-
-### Persistência
-Os dados do PostgreSQL são persistidos em um **Named Volume** gerenciado pelo Docker:
-- Volume: `postgres-data` → montado em `/var/lib/postgresql/data` dentro do container `postgres`
-- Os dados sobrevivem a reinicializações dos containers (`docker compose restart`) e só são apagados com `docker compose down -v`
-
-### Rede e Comunicação
-Todos os serviços compartilham a rede bridge customizada `private-network`, que fornece **DNS interno** automático:
-- O Nginx recebe requisições externas na porta `80` e as encaminha internamente para `http://node:3000`
-- O serviço `node` acessa o banco via `DB_HOST=postgres` (nome do serviço como hostname)
-- O pgAdmin acessa o banco via hostname `postgres` na porta `5432`
-- Nenhum serviço de banco ou aplicação expõe portas diretamente ao host, exceto ao Nginx (`80`)
-
-### Segurança
-- Todas as credenciais são carregadas via arquivo `.env` (nunca hardcoded) e ignoradas pelo `.gitignore`
-- O arquivo `pgadmin/pgpass` (com senha do banco) também está protegido pelo `.gitignore`
-- A rede `private-network` isola os serviços internos, impedindo acesso externo direto ao banco de dados
-
-## 5. Gestão de Segredos e Configurações
 
 > [!CAUTION]
 > **NUNCA** comite senhas, chaves de API ou qualquer credencial real no repositório. O arquivo `.env` está listado no `.gitignore` exatamente para isso. Apenas o arquivo `.env.example` (com valores fictícios) deve ser versionado.
@@ -86,17 +39,6 @@ O projeto utiliza um arquivo `.env` na raiz para centralizar todas as credenciai
 
 3. **Não compartilhe** o arquivo `.env` preenchido. Ele já está protegido pelo `.gitignore`.
 
-4. **Sincronize o arquivo `pgadmin/pgpass`** com as credenciais que você definiu no `.env`. Abra o arquivo e atualize os campos de usuário e senha para que correspondam a `DB_USERNAME` e `DB_PASSWORD`:
-
-   ```
-   # pgadmin/pgpass  ← este arquivo NÃO deve ser commitado (já está no .gitignore)
-   # Formato: hostname:port:database:username:password
-   postgres:5432:*:seu_usuario:sua_senha_segura
-   ```
-
-   > [!WARNING]
-   > Se os valores em `pgadmin/pgpass` não baterem com as credenciais do banco, o pgAdmin abrirá o servidor pré-configurado mas **solicitará a senha manualmente** na primeira conexão.
-
 #### Descrição das variáveis
 
 | Variável | Descrição | Exemplo |
@@ -108,6 +50,111 @@ O projeto utiliza um arquivo `.env` na raiz para centralizar todas as credenciai
 | `DB_PASSWORD` | Senha do usuário do PostgreSQL | `s3nh@F0rte!` |
 
 > **Como as variáveis são usadas:** o `docker-compose.yml` repassa `DB_PASSWORD`, `DB_USERNAME` e `DB_DATABASE` diretamente ao container `postgres` via `POSTGRES_PASSWORD`, `POSTGRES_USER` e `POSTGRES_DB`. O serviço `node` recebe o arquivo `.env` completo via `env_file`, tornando todas as variáveis disponíveis para a aplicação NestJS.
+
+**Pré-requisito:** Docker Desktop instalado e em execução.
+
+```bash
+# 1. Clone o repositório
+git clone <url-do-repositório>
+
+# 2. Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o .env com suas credenciais reais
+
+# 4. Suba toda a infraestrutura (build + start + migrations)
+docker compose up -d --build
+```
+
+> Após a execução, a API estará disponível em `http://localhost` e a documentação em `http://localhost/api-docs`.
+
+## 4. Detalhamento Técnico da Infraestrutura
+
+* **Otimização de Imagens**: O `Dockerfile` da aplicação foi devidamente otimizado com o uso de imagens leves baseadas em Alpine (`node:26-alpine`) em conjunto com a técnica de **Multi-stage build**. O primeiro estágio compila a aplicação, e o segundo estágio copia unicamente os binários de produção (`dist/` e `node_modules/` de runtime), descartando ferramentas de desenvolvimento e reduzindo drasticamente o tamanho da imagem gerada.
+
+* **Persistência**: A estratégia de dados adotada baseia-se em **Named Volumes** no Docker. Foi criado o volume `postgres-data` que isola de forma permanente os dados do banco PostgreSQL. Mesmo que os containers caiam, sejam reiniciados ou atualizados, a integridade dos registros armazenados e das migrations está garantida.
+
+* **Rede e Comunicação**: A infraestrutura conta com o uso de uma **rede customizada** nomeada `private-network`, que viabiliza o isolamento de tráfego e o **DNS Interno no Docker**. Serviços como a aplicação Node.js acessam o banco usando apenas o hostname (`postgres`), e o Nginx atua como proxy reverso roteando as requisições, não existindo a necessidade de IPs fixos no container.
+
+* **Segurança**: O projeto faz forte uso de **variáveis de ambiente no arquivo .env** para desenvolvimento — ignorado pelo Git para evitar vazamento — e **Docker Secrets** para o orquestrador Swarm em produção. Além disso, de forma equivalente a Security Groups restritivos, a rede customizada isola as portas de comunicação interna de todo o ambiente host, sendo liberado acesso público somente à porta 80 por intermédio do proxy do Nginx.
+
+## 5. Gestão de Segredos e Configurações
+### Docker Compose
+
+> [!CAUTION]
+> **NUNCA** comite senhas, chaves de API ou qualquer credencial real no repositório. O arquivo `.env` está listado no `.gitignore` exatamente para isso. Apenas o arquivo `.env.example` (com valores fictícios) deve ser versionado.
+
+
+1. Copie o arquivo de exemplo para criar o seu `.env` local:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Abra o arquivo `.env` e preencha cada variável com os valores reais do seu ambiente:
+
+   ```bash
+   # .env  ← este arquivo NÃO deve ser commitado
+   DB_HOST=postgres # Não modificar caso deseje utilizar o container PostgreSQL do projeto
+   DB_PORT=5432 # Não modificar caso deseje utilizar o container PostgreSQL do projeto
+   DB_DATABASE=nome_do_banco
+   DB_USERNAME=seu_usuario
+   DB_PASSWORD=sua_senha_segura
+   ```
+
+
+### Docker Swarm
+
+Inicializar o Docker Swarm:
+```bash
+docker swarm init
+```
+
+É necessário realizar o build das imagens a partir dos Dockerfiles:
+```bash
+# Constrói a imagem do Node
+docker build -t prova_segundo_bimestre_node:latest .
+
+# Constrói a imagem do Nginx
+docker build -t prova_segundo_bimestre_nginx:latest -f Dockerfile.nginx .
+```
+
+### Criação das secrets
+
+Utilize os mesmos valores salvos no arquivo `.env`.
+
+> ⚠️ **Atenção:** confira se o nome de cada secret (`db_password`, `db_username`, `db_database`) corresponde de fato ao valor informado — abaixo os rótulos não batem com os valores/nomes de secret usados nos comandos originais.
+
+Nome do banco de dados:
+```bash
+echo -n "prova" | docker secret create db_database -
+```
+
+Usuário do banco de dados:
+```bash
+echo -n "vendas_example" | docker secret create db_username -
+```
+
+Senha do banco de dados:
+```bash
+echo -n "Vendas@123_example" | docker secret create db_password -
+```
+
+### Deploy da aplicação
+
+```bash
+docker stack deploy -c docker-stack.yml app_segundo_bimestre
+```
+
+Verificar se todos os serviços estão rodando corretamente:
+```bash
+docker service ls
+```
+
+### Finalizar uma aplicação
+```bash
+docker stack rm app_segundo_bimestre
+```
+
 
 ## 6. Evidências de Funcionamento e Verificação
 
@@ -168,7 +215,6 @@ docker volume inspect prova_segundo_bimestre_postgres-data
 |---|---|---|
 | Aplicação (via Nginx) | `http://localhost` | Entrada principal da API |
 | Documentação Swagger | `http://localhost/api-docs` | Interface interativa da API ✅ |
-| PgAdmin | `http://localhost:8090` | Interface de administração do banco |
 
 ## 7. Troubleshooting e Limpeza
 
@@ -179,7 +225,6 @@ docker volume inspect prova_segundo_bimestre_postgres-data
 | Container `node` reinicia em loop | Banco ainda não está pronto | Aguarde o `postgres` subir; o `depends_on` garante a ordem mas não a prontidão |
 | `Error: password authentication failed` | Credenciais no `.env` não batem com o volume existente | Rode `docker compose down -v` para apagar o volume e suba novamente |
 | Nginx retorna 502 Bad Gateway | Serviço `node` ainda está inicializando | Aguarde alguns segundos e recarregue |
-| pgAdmin pede senha na conexão | `pgadmin/pgpass` não está sincronizado com o `.env` | Corrija o `pgpass` e rode `docker compose restart pgadmin` |
 | Porta 80 já em uso | Outro processo usando a porta | Pare o processo com `netstat -ano` ou mude a porta no `docker-compose.yml` |
 
 ### Inspecionar um container específico
@@ -200,6 +245,18 @@ docker compose down -v
 
 # Remove também as imagens buildadas localmente
 docker compose down -v --rmi local
+
+# Remove networks não utilizadas
+docker network prune -f
+
+# Remove volumes não utilizados (cuidado com dados)
+docker volume prune -f
+
+# Remove todos os volumes órfãos
+docker volume rm $(docker volume ls -qf dangling=true)
+
+# Remove imagens não utilizadas
+docker image prune -a -f
 ```
 
 
