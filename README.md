@@ -264,6 +264,9 @@ docker stack rm app_segundo_bimestre
 docker secret rm db_database
 docker secret rm db_password
 docker secret rm db_username
+
+# Sair do Docker Swarm
+docker swarm leave --force
 ```
 
 
