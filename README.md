@@ -284,27 +284,241 @@ Todos os requisitos técnicos solicitados foram implementados e organizados conf
 - **Inicialização Automática e Segurança (.env):** O script `scripts/init-collection.js` utiliza o driver `pg` para automatizar a leitura do arquivo `.env` e a execução sequencial do `setup.sql` e `seed.sql`, de forma segura e parametrizada.
 
 # Desenvolvimento Web
-* **Descrição do sistema de APIs**
-* **Entidades, tabelas e relacionamentos**
-* **Indicação da tabela pivô e da relação N:N**
-* **CRUD completo das entidades principais**
-* **Containers utilizados no projeto**
 
-## Configurações do projeto
+API RESTful para controle de vendas e estoque, construída com **NestJS**, **TypeORM** e **PostgreSQL**, com autenticação via **JWT** e documentação interativa via **Swagger**.
 
-Para que a aplicação inicie corretamente, é necessário configurar o arquivo `.env`:
+---
 
-1. Copie (ou renomeie) o arquivo `.env.example` para `.env`:
-```bash
-   cp .env.example .env
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [ORM Utilizado — TypeORM vs Sequelize](#orm-utilizado--typeorm-vs-sequelize)
+- [Entidades e Relacionamentos](#entidades-e-relacionamentos)
+- [Containers Docker](#containers-docker)
+- [Configuração do Projeto](#configuração-do-projeto)
+- [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli)
+- [Executando com Docker](#executando-com-docker)
+- [Autenticação JWT](#autenticação-jwt)
+- [Documentação Swagger](#documentação-swagger)
+- [Bibliotecas Utilizadas](#bibliotecas-utilizadas)
+
+---
+
+## Visão Geral
+
+O sistema permite que usuários autenticados gerenciem clientes, itens e vendas, realizando operações de criação, leitura, atualização e remoção (CRUD) em todas as entidades principais.
+
+---
+
+## ORM Utilizado — TypeORM vs Sequelize
+
+Este projeto utiliza o **TypeORM** como ORM (Object-Relational Mapper) em vez do Sequelize. Ambas são soluções consolidadas para Node.js que abstraem a comunicação com bancos de dados relacionais, mas diferem em alguns aspectos importantes:
+
+| Característica | TypeORM | Sequelize |
+|---|---|---|
+| **Linguagem principal** | TypeScript (nativo) | JavaScript (suporte a TS via pacotes externos) |
+| **Definição de modelos** | Decorators nas classes (`@Entity`, `@Column`, etc.) | Objetos de configuração ou classes com `Model.init()` |
+| **Equivalente ao Model** | `Entity` | `Model` |
+| **Migrations** | Geradas automaticamente a partir das entidades | Criadas manualmente ou via CLI |
+| **Integração com NestJS** | Oficial (`@nestjs/typeorm`) | Possível, porém sem pacote oficial do ecossistema Nest |
+| **Padrão de repositório** | Nativo (`Repository<T>`) | Não nativo (requer implementação manual) |
+
+### Equivalência: Entities (TypeORM) = Models (Sequelize)
+
+No Sequelize, os **Models** definem a estrutura das tabelas e são o ponto central de interação com o banco. No TypeORM, esse papel é exercido pelas **Entities** — classes TypeScript decoradas com `@Entity()` que mapeiam diretamente para as tabelas do banco de dados.
+
+As entities deste projeto estão localizadas em:
+
 ```
-2. Substitua os valores das variáveis pelos dados de conexão do seu banco de dados.
+src/entities/
+```
 
-> ℹ️ Se a aplicação for executada via Docker, o banco de dados e o usuário são criados automaticamente, não havendo necessidade de criá-los previamente. Caso a execução seja feita **fora do Docker**, é necessário que o banco e o usuário já existam antes de iniciar a aplicação.
+Cada arquivo nesse diretório corresponde a uma entidade do sistema (Cliente, Usuario, Item, Venda e ItemVenda) e define os campos, tipos e relacionamentos da respectiva tabela, de forma equivalente ao que seria um Model no Sequelize.
 
-### Exemplo
+### Migrations
+
+As migrations descrevem as alterações estruturais no banco de dados (criação de tabelas, adição de colunas, etc.) de forma versionada e rastreável. No TypeORM, elas podem ser geradas automaticamente a partir das entities, diferentemente do Sequelize, onde geralmente são escritas manualmente.
+
+As migrations deste projeto estão localizadas em:
+
+```
+src/migrations/
+```
+
+Elas são executadas **automaticamente** na inicialização do servidor, sem necessidade de intervenção manual. Caso queira executá-las manualmente, consulte a seção [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli).
+
+---
+
+## Entidades e Relacionamentos
+
+| Entidade | Tabela | Chave primária | Descrição |
+|---|---|---|---|
+| **Cliente** | `tb_clientes` | `id` (auto-increment) | Clientes que realizam compras |
+| **Usuario** | `tb_usuarios` | `id` (auto-increment) | Usuários que manipulam o sistema (CRUD) |
+| **Item** | `tb_itens` | `codigo` (string, manual) | Itens disponíveis para venda |
+| **Venda** | `tb_vendas` | `id` (auto-increment) | Vendas realizadas no sistema |
+| **ItemVenda** | `tb_itens_vendas` | `id` (auto-increment) | Tabela pivô — relação N:N entre Venda e Item |
+
+Os arquivos das entities estão localizados em `src/entities/` e correspondem cada um a uma das tabelas acima.
+
+---
+
+### Detalhamento das Entities
+
+#### Cliente (`src/entities/cliente.ts`)
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| `id` | `integer` | PK, auto-increment |
+| `cpf` | `string` | NOT NULL, UNIQUE |
+| `nome` | `string` | NOT NULL |
+| `sobrenome` | `string` | NOT NULL |
+
+Não possui relacionamentos declarados na própria entity — é referenciada por **Venda**.
+
+---
+
+#### Usuario (`src/entities/usuario.ts`)
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| `id` | `integer` | PK, auto-increment |
+| `email` | `string` | NOT NULL, UNIQUE |
+| `senha` | `string` | NOT NULL |
+| `nome` | `string` | NOT NULL |
+| `sobrenome` | `string` | NOT NULL |
+
+Não possui relacionamentos declarados na própria entity — é referenciada por **Venda**.
+
+---
+
+#### Item (`src/entities/item.ts`)
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| `codigo` | `string` | PK (definido manualmente via `@PrimaryColumn`) |
+| `nome` | `string` | NOT NULL |
+| `quantia` | `decimal(10,2)` | NOT NULL, default `0.00` |
+| `valor` | `decimal(10,2)` | NOT NULL, default `0.00` |
+
+Não possui relacionamentos declarados na própria entity — é referenciada por **ItemVenda**.
+
+> **Observação:** diferentemente das demais entidades, a chave primária de `Item` é o campo `codigo` (string), definido manualmente via `@PrimaryColumn()`, e não gerado automaticamente.
+
+---
+
+#### Venda (`src/entities/venda.ts`)
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| `id` | `integer` | PK, auto-increment |
+| `cliente_id` | FK → `tb_clientes` | Nullable — `SET NULL` ao deletar/atualizar |
+| `usuario_id` | FK → `tb_usuarios` | NOT NULL — `SET NULL` ao deletar/atualizar |
+| `data_venda` | `timestamp` | NOT NULL, preenchido automaticamente na criação |
+
+**Relacionamentos:**
+
+| Tipo | Entidade relacionada | Coluna FK | Comportamento |
+|---|---|---|---|
+| `ManyToOne` | **Cliente** | `cliente_id` | Nullable — se o cliente for deletado, a FK é definida como `NULL` |
+| `ManyToOne` | **Usuario** | `usuario_id` | Se o usuário for deletado, a FK é definida como `NULL` |
+| `OneToMany` | **ItemVenda** | — | Uma venda pode ter múltiplos itens (acesso via propriedade `itens`) |
+
+**Índices:**
+
+| Nome do índice | Coluna(s) |
+|---|---|
+| `idx_tb_vendas_data_venda` | `data_venda` |
+| `idx_tb_vendas_cliente_id` | `cliente_id` |
+
+---
+
+#### ItemVenda (`src/entities/item-venda.ts`) — Tabela Pivô N:N
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| `id` | `integer` | PK, auto-increment |
+| `venda_id` | FK → `tb_vendas` | NOT NULL — `CASCADE` ao deletar/atualizar |
+| `item_id` | FK → `tb_itens` | NOT NULL — `CASCADE` ao deletar/atualizar |
+| `quantia` | `decimal(10,2)` | NOT NULL, default `0.00` |
+| `valor` | `decimal(10,2)` | NOT NULL, default `0.00` |
+
+**Relacionamentos:**
+
+| Tipo | Entidade relacionada | Coluna FK | Comportamento |
+|---|---|---|---|
+| `ManyToOne` | **Venda** | `venda_id` | Se a venda for deletada, os registros de `ItemVenda` são deletados em cascata |
+| `ManyToOne` | **Item** | `item_id` | Se o item for deletado, os registros de `ItemVenda` são deletados em cascata |
+
+**Índices:**
+
+| Nome do índice | Coluna(s) |
+|---|---|
+| `idx_tb_itens_vendas_venda_id` | `venda_id` |
+
+---
+
+### Visão Geral dos Relacionamentos
+
+```
+Cliente ──────────────────────────────┐
+                                      │ ManyToOne (nullable, SET NULL)
+                               ┌──────▼──────┐
+Usuario ──── ManyToOne ───────►│    Venda    │
+(SET NULL)                     └──────┬──────┘
+                                      │ OneToMany
+                               ┌──────▼──────┐
+                               │  ItemVenda  │◄──── ManyToOne ──── Item
+                               │ (tb pivô)   │      (CASCADE)
+                               └─────────────┘
+```
+
+A entidade **ItemVenda** é a **tabela pivô** que implementa a relação N:N entre `Venda` e `Item`: uma venda pode conter múltiplos itens, e um mesmo item pode aparecer em múltiplas vendas. Além das chaves estrangeiras, a tabela pivô armazena `quantia` e `valor` — dados específicos de cada item dentro de uma venda.
+
+---
+
+## Containers Docker
+
+| Container | Imagem | Origem |
+|---|---|---|
+| Banco de dados | `postgres:17` | Baixada diretamente no `docker-compose.yml` |
+| Aplicação Node | `node:26-alpine` | Build via `Dockerfile`, referenciada como `node` |
+| Proxy reverso | `nginx:latest` | Build via `Dockerfile`, referenciada como `nginx` |
+
+---
+
+## Configuração do Projeto
+
+### 1. Clonar o repositório
 
 ```bash
+git clone https://github.com/CaiqueSouzaa/prova_segundo_bimestre.git
+cd prova_segundo_bimestre
+```
+
+### 2. Instalar as dependências
+
+```bash
+npm install
+```
+
+### 3. Configurar o arquivo `.env`
+
+Copie o arquivo de exemplo e preencha com os seus dados de conexão:
+
+**Linux/Mac**
+```bash
+cp .env.example .env
+```
+
+**Windows**
+```bash
+copy .env.example .env
+```
+
+Edite o `.env` com as variáveis adequadas:
+
+```env
 DB_HOST=postgres
 DB_PORT=5432
 DB_DATABASE=db_vendas
@@ -314,19 +528,24 @@ DB_PASSWORD=sua_senha_aqui
 JWT_SECRET=sua_chave_secreta_aqui
 ```
 
-> ⚠️ Nunca utilize esses valores em produção e certifique-se de que o `.env` está listado no `.gitignore` para não ser versionado.
+> ℹ️ **Docker:** o banco de dados e o usuário são criados automaticamente — não é necessária nenhuma configuração prévia no banco.  
+> ⚙️ **Sem Docker:** o banco e o usuário já devem existir antes de iniciar a aplicação.
 
-### Migrations
+> ⚠️ Nunca utilize valores sensíveis em produção. Certifique-se de que o `.env` está no `.gitignore`.
 
-As migrations são executadas automaticamente na inicialização do servidor, não sendo necessária a execução manual. Caso deseje executá-las manualmente, o comando está disponível ao final do tópico "Desenvolvimento Web".
+### 4. Migrations
 
-## Entrypoints e Commands
+As migrations são executadas **automaticamente** ao iniciar o servidor. Para executá-las manualmente, veja a seção [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli).
 
-O projeto possui dois entrypoints definidos na raiz:
+---
 
-### `server.js` — Entrypoint do Servidor Web
+## Entrypoints e Comandos CLI
 
-Inicia o servidor web NestJS (requer build prévia):
+O projeto possui dois entrypoints na raiz:
+
+### `server.js` — Servidor Web
+
+Inicia o servidor NestJS (requer build prévia):
 
 ```bash
 # 1. Gerar o build de produção
@@ -336,102 +555,123 @@ npm run build
 node server.js
 ```
 
-> Em desenvolvimento, utilize `npm run start:dev` para hot-reload.
+> Em desenvolvimento, use `npm run start:dev` para hot-reload.
 
-### `command.js` — Entrypoint de Comandos CLI
+### `command.js` — Comandos Administrativos
 
-Permite executar comandos administrativos via linha de comando:
+Executa tarefas administrativas via linha de comando:
 
 ```bash
 node command.js <comando>
 ```
 
-#### Comandos disponíveis
-
 | Comando | Descrição |
 |---|---|
-| `migrate` | Executa todas as migrations pendentes no banco de dados |
-| `migration:generate` | Realiza a criação de uma nova migration para o banco de dados |
+| `migrate` | Executa todas as migrations pendentes |
+| `migration:generate` | Cria uma nova migration |
 
-#### Exemplos de uso
+**Exemplos:**
 
 ```bash
-# Executar as migrations
+# Executar migrations pendentes
 node command.js migrate
+
+# Gerar uma nova migration
+node command.js migration:generate
 ```
 
-> **Nota:** O comando `migrate` usa diretamente o TypeORM com o data-source em `src/data-source.ts`, portanto não exige build prévia — apenas que as dependências estejam instaladas (`npm install`) e o arquivo `.env` esteja configurado.
+> **Nota:** O comando `migrate` utiliza diretamente o TypeORM com o data-source em `src/data-source.ts`. Não exige build prévia — apenas `npm install` e o `.env` configurado.
 
 ---
 
-## Bibliotecas utilizadas no projeto
-O projeto foi construído utilizando o framework Nest.js, em conjunto com as bibliotecas:
-* typeorm: ORM para manipulação do banco de dados;
-* @nestjs/typeorm: Biblioteca para integrar o TypeORm ao Nest.js
-* pg: Driver para acesso ao banco de dados PostgreSQL;
-* typescript: Biblioteca para tipagem em tempo de transpilação do JavaScript;
-* @nestjs/jwt: Bibliteca de Json Web Token para Nest.js;
-* bcrypt: Biblioteca para geração e comparação de senhas seguras;
-* @nestjs/config: Biblioteca para uso de variáveis de ambiente no Nest.js;
-* @nestjs/swagger: Swagger para o Nest.js;
+## Executando com Docker
 
-## Como realizar login e usar o token JWT
+```bash
+# Build e inicialização de todos os serviços
+docker compose up -d --build
 
-> **Nota:** a autenticação JWT está configurada no projeto mas a rota de login deve ser verificada no Swagger em `http://localhost/api-docs`.
+# Parar os containers (mantém os dados)
+docker compose stop
 
-Após obter o token, inclua-o nas requisições protegidas via header:
+# Remover os containers (mantém os volumes)
+docker compose down
+
+# Remover containers e volumes (apaga os dados do banco)
+docker compose down -v
+```
+
+---
+
+## Autenticação JWT
+
+### Login
+
+| | Docker Compose | Sem Docker |
+|---|---|---|
+| **URL** | `http://localhost/login` | `http://localhost:3000/login` |
+
+**Exemplo de requisição:**
+
+```http
+POST http://localhost/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "senha": "Senha"
+}
+```
+
+**Resposta:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Usando o token
+
+Inclua o token em todas as requisições protegidas via header:
 
 ```
 Authorization: Bearer <seu_token_aqui>
 ```
 
+---
+
 ## Documentação Swagger
 
-A documentação interativa da API está disponível em:
+A documentação interativa está disponível após iniciar a aplicação:
 
-[http://localhost/api-docs](http://localhost/api-docs)
+| Modo de execução | URL |
+|---|---|
+| Docker Compose | [http://localhost/api-docs](http://localhost/api-docs) |
+| Sem Docker | [http://localhost:3000/api-docs](http://localhost:3000/api-docs) |
 
 Gerada automaticamente pelo `@nestjs/swagger` a partir das anotações nos controllers, permite visualizar e testar todas as rotas diretamente pelo navegador.
 
-### Autenticação para testes
-
-Para testar as rotas protegidas, utilize as credenciais do usuário administrador seedado em ambiente de desenvolvimento:
+### Credenciais para testes (apenas desenvolvimento)
 
 | Campo | Valor |
 |---|---|
 | Email | `admin@email.com` |
 | Senha | `Admin@123` |
 
-> ⚠️ Essas credenciais devem existir **apenas em ambiente local/desenvolvimento** (via seed do banco). Nunca utilize essa combinação de email/senha em produção.
+> ⚠️ Essas credenciais existem **apenas em ambiente local** (via seed). Nunca as utilize em produção.
 
-Após obter o token de sessão, copie-o e insira no campo **Authorize → Value**. Não é necessário incluir o prefixo `Bearer`, pois o Swagger o adiciona automaticamente.
+Após obter o token, insira-o no campo **Authorize → Value** no Swagger. O prefixo `Bearer` é adicionado automaticamente.
 
-## Como executar o projeto com Docker
+---
 
-```bash
-# Build e start de todos os serviços
-docker compose up -d --build
+## Bibliotecas Utilizadas
 
-# Parar sem apagar dados
-docker compose stop
-
-# Parar e remover containers (mantém volumes)
-docker compose down
-
-# Parar e remover tudo, incluindo dados do banco
-docker compose down -v
-```
-
-## Como executar as migrations pelo command
-
-```bash
-# Executar todas as migrations pendentes
-node command.js migrate
-```
-
-### Como criar uma nova migration
-
-```bash
-# Cria uma nova migration
-node command.js migration:generate
-```
+| Biblioteca | Finalidade |
+|---|---|
+| `@nestjs/typeorm` + `typeorm` | ORM e integração com NestJS |
+| `pg` | Driver para PostgreSQL |
+| `typescript` | Tipagem estática em tempo de transpilação |
+| `@nestjs/jwt` | Autenticação via JSON Web Token |
+| `bcrypt` | Geração e comparação de senhas seguras |
+| `@nestjs/config` | Gerenciamento de variáveis de ambiente |
+| `@nestjs/swagger` | Documentação interativa da API |
