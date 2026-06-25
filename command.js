@@ -12,12 +12,14 @@
 
 const { migrateCommand } = require('./commands/migrate.command');
 const { migrationGenerateCommand } = require('./commands/migration-generate.command');
+const { seedCommand } = require('./commands/seed.command');
 
 const [, , command, ...args] = process.argv;
 
 const commands = {
   migrate: migrateCommand,
-  "migration:generate": migrationGenerateCommand
+  "migration:generate": migrationGenerateCommand,
+  seed: seedCommand,
 };
 
 if (!command) {

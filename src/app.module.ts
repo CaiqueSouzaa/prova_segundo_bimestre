@@ -1,6 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { runSeeds } from './seeds/seed';
+import { Module } from '@nestjs/common';
 import { UsuarioApplicationModule } from './modules/usuario/usuario-application.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,6 +6,7 @@ import { AuthApplicationModule } from './modules/auth/auth-application.module';
 import { ClienteApplicationModule } from './modules/cliente/cliente-application.module';
 import { ItemApplicationModule } from './modules/item/item-application.module';
 import { VendaApplicationModule } from './modules/venda/venda-application.module';
+import path from 'path';
 
 @Module({
   imports: [
@@ -27,7 +26,7 @@ import { VendaApplicationModule } from './modules/venda/venda-application.module
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           entities: [__dirname + '/**/entities/*{.ts,.js}'],
-          migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+          migrations: [path.join(__dirname, '..') + '/migrations/**/*{.ts,.js}'],
           migrationsRun: true,
         };
       },
@@ -42,10 +41,4 @@ import { VendaApplicationModule } from './modules/venda/venda-application.module
   providers: [],
   exports: [],
 })
-export class AppModule implements OnModuleInit {
-  constructor(private dataSource: DataSource) {}
-
-  async onModuleInit() {
-    await runSeeds(this.dataSource);
-  }
-}
+export class AppModule {}

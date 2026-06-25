@@ -4,4 +4,4 @@
  * Inicia a aplicação NestJS compilada.
  * Uso: node server.js
  */
-require('./dist/main');
+require('./dist/src/main');

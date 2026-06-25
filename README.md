@@ -342,10 +342,14 @@ As migrations descrevem as alterações estruturais no banco de dados (criação
 As migrations deste projeto estão localizadas em:
 
 ```
-src/migrations/
+migrations/
 ```
 
 Elas são executadas **automaticamente** na inicialização do servidor, sem necessidade de intervenção manual. Caso queira executá-las manualmente, consulte a seção [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli).
+
+### Seeds
+
+Existe atualmente o seed para dados fakes, o qual deve ser executado manualmente após a inicialização do servidor ou execução das migrations.
 
 ---
 
@@ -496,13 +500,7 @@ git clone https://github.com/CaiqueSouzaa/prova_segundo_bimestre.git
 cd prova_segundo_bimestre
 ```
 
-### 2. Instalar as dependências
-
-```bash
-npm install
-```
-
-### 3. Configurar o arquivo `.env`
+### 2. Configurar o arquivo `.env`
 
 Copie o arquivo de exemplo e preencha com os seus dados de conexão:
 
@@ -528,6 +526,13 @@ DB_PASSWORD=sua_senha_aqui
 JWT_SECRET=sua_chave_secreta_aqui
 ```
 
+### 3. Instalar as dependências
+Ignore este processo caso deseje executar o projeto em Docker.
+
+```bash
+npm install
+```
+
 > ℹ️ **Docker:** o banco de dados e o usuário são criados automaticamente — não é necessária nenhuma configuração prévia no banco.  
 > ⚙️ **Sem Docker:** o banco e o usuário já devem existir antes de iniciar a aplicação.
 
@@ -544,6 +549,7 @@ As migrations são executadas **automaticamente** ao iniciar o servidor. Para ex
 O projeto possui dois entrypoints na raiz:
 
 ### `server.js` — Servidor Web
+Em caso de execução através do Docker, o "server.js" é inicializado automaticamente, não sendo necessário sua execução.
 
 Inicia o servidor NestJS (requer build prévia):
 
@@ -569,8 +575,21 @@ node command.js <comando>
 |---|---|
 | `migrate` | Executa todas as migrations pendentes |
 | `migration:generate` | Cria uma nova migration |
+| `seed` | Realiza a inserção de dados fakes no banco de dados |
 
 **Exemplos:**
+
+Em caso de execução via Docker, executar os comandos da seguinte forma:
+```bash
+# Executar migrations pendentes
+docker compose run runner node command.js migrate
+
+# Gerar uma nova migration
+docker compose run runner node command.js migration:generate
+
+# Executar seeds de dados fake
+docker compose run runner node command.js seed
+```
 
 ```bash
 # Executar migrations pendentes
@@ -578,9 +597,12 @@ node command.js migrate
 
 # Gerar uma nova migration
 node command.js migration:generate
+
+# Executar seeds de dados fake
+node command.js seed
 ```
 
-> **Nota:** O comando `migrate` utiliza diretamente o TypeORM com o data-source em `src/data-source.ts`. Não exige build prévia — apenas `npm install` e o `.env` configurado.
+> **Nota:** O comando `migrate` utiliza diretamente o TypeORM com o data-source em `data-source.ts`. Não exige build prévia — apenas `npm install` e o `.env` configurado.
 
 ---
 
