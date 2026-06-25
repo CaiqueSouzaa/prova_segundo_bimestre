@@ -336,6 +336,10 @@ O sistema permite que usuários autenticados gerenciem clientes, itens e vendas,
 
 ## Configuração do Projeto
 
+### Pré-requisitos
+* **Lista de ferramentas necessárias instaladas no ambiente WSL2**: Docker Desktop
+* **Configurações iniciais necessárias**: Inicializar o Docker na máquina host
+
 ### 1. Clonar o repositório
 
 ```bash
