@@ -292,21 +292,254 @@ API RESTful para controle de vendas e estoque, construída com **NestJS**, **Typ
 ## Sumário
 
 - [Visão Geral](#visão-geral)
-- [ORM Utilizado — TypeORM vs Sequelize](#orm-utilizado--typeorm-vs-sequelize)
-- [Entidades e Relacionamentos](#entidades-e-relacionamentos)
+- [Bibliotecas Utilizadas](#bibliotecas-utilizadas)
 - [Containers Docker](#containers-docker)
 - [Configuração do Projeto](#configuração-do-projeto)
-- [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli)
 - [Executando com Docker](#executando-com-docker)
+- [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli)
 - [Autenticação JWT](#autenticação-jwt)
 - [Documentação Swagger](#documentação-swagger)
-- [Bibliotecas Utilizadas](#bibliotecas-utilizadas)
+- [ORM Utilizado — TypeORM vs Sequelize](#orm-utilizado--typeorm-vs-sequelize)
+- [Entidades e Relacionamentos](#entidades-e-relacionamentos)
 
 ---
 
 ## Visão Geral
 
 O sistema permite que usuários autenticados gerenciem clientes, itens e vendas, realizando operações de criação, leitura, atualização e remoção (CRUD) em todas as entidades principais.
+
+---
+
+## Bibliotecas Utilizadas
+
+| Biblioteca | Finalidade |
+|---|---|
+| `@nestjs/typeorm` + `typeorm` | ORM e integração com NestJS |
+| `pg` | Driver para PostgreSQL |
+| `typescript` | Tipagem estática em tempo de transpilação |
+| `@nestjs/jwt` | Autenticação via JSON Web Token |
+| `bcrypt` | Geração e comparação de senhas seguras |
+| `@nestjs/config` | Gerenciamento de variáveis de ambiente |
+| `@nestjs/swagger` | Documentação interativa da API |
+
+---
+
+## Containers Docker
+
+| Container | Imagem | Origem |
+|---|---|---|
+| Banco de dados | `postgres:17` | Baixada diretamente no `docker-compose.yml` |
+| Aplicação Node | `node:26-alpine` | Build via `Dockerfile`, referenciada como `node` |
+| Proxy reverso | `nginx:latest` | Build via `Dockerfile`, referenciada como `nginx` |
+
+---
+
+## Configuração do Projeto
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/CaiqueSouzaa/prova_segundo_bimestre.git
+cd prova_segundo_bimestre
+```
+
+### 2. Configurar o arquivo `.env`
+
+Copie o arquivo de exemplo e preencha com os seus dados de conexão:
+
+**Linux/Mac**
+```bash
+cp .env.example .env
+```
+
+**Windows**
+```bash
+copy .env.example .env
+```
+
+Edite o `.env` com as variáveis adequadas:
+
+```env
+DB_HOST=postgres
+DB_PORT=5432
+DB_DATABASE=db_vendas
+DB_USERNAME=vendas_user
+DB_PASSWORD=sua_senha_aqui
+
+JWT_SECRET=sua_chave_secreta_aqui
+```
+
+### 3. Instalar as dependências
+Ignore este processo caso deseje executar o projeto em Docker.
+
+```bash
+npm install
+```
+
+> ℹ️ **Docker:** o banco de dados e o usuário são criados automaticamente — não é necessária nenhuma configuração prévia no banco.  
+> ⚙️ **Sem Docker:** o banco e o usuário já devem existir antes de iniciar a aplicação.
+
+> ⚠️ Nunca utilize valores sensíveis em produção. Certifique-se de que o `.env` está no `.gitignore`.
+
+### 4. Migrations
+
+As migrations são executadas **automaticamente** ao iniciar o servidor. Para executá-las manualmente, veja a seção [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli).
+
+### 5. Seeds (dados fakes)
+
+Diferentemente das migrations, as seeds **não são executadas automaticamente** — é necessário rodá-las manualmente após o servidor estar de pé (ou após as migrations terem sido aplicadas):
+
+```bash
+# Com Docker
+docker compose run runner node command.js seed
+
+# Sem Docker
+node command.js seed
+```
+
+> Isso populará o banco com dados fakes, incluindo o usuário de teste usado na seção [Documentação Swagger](#documentação-swagger) (`admin@email.com` / `Admin@123`).
+
+---
+
+## Executando com Docker
+
+```bash
+# Build e inicialização de todos os serviços
+docker compose up -d --build
+
+# Parar os containers (mantém os dados)
+docker compose stop
+
+# Remover os containers (mantém os volumes)
+docker compose down
+
+# Remover containers e volumes (apaga os dados do banco)
+docker compose down -v
+```
+
+---
+
+## Entrypoints e Comandos CLI
+
+O projeto possui dois entrypoints na raiz:
+
+### `server.js` — Servidor Web
+Em caso de execução através do Docker, o "server.js" é inicializado automaticamente, não sendo necessário sua execução.
+
+Inicia o servidor NestJS (requer build prévia):
+
+```bash
+# 1. Gerar o build de produção
+npm run build
+
+# 2. Iniciar o servidor
+node server.js
+```
+
+> Em desenvolvimento, use `npm run start:dev` para hot-reload.
+
+### `command.js` — Comandos Administrativos
+
+Executa tarefas administrativas via linha de comando:
+
+```bash
+node command.js <comando>
+```
+
+| Comando | Descrição |
+|---|---|
+| `migrate` | Executa todas as migrations pendentes |
+| `migration:generate` | Cria uma nova migration |
+| `seed` | Realiza a inserção de dados fakes no banco de dados |
+
+**Exemplos:**
+
+Em caso de execução via Docker, executar os comandos da seguinte forma:
+```bash
+# Executar migrations pendentes
+docker compose run runner node command.js migrate
+
+# Gerar uma nova migration
+docker compose run runner node command.js migration:generate
+
+# Executar seeds de dados fake
+docker compose run runner node command.js seed
+```
+
+```bash
+# Executar migrations pendentes
+node command.js migrate
+
+# Gerar uma nova migration
+node command.js migration:generate
+
+# Executar seeds de dados fake
+node command.js seed
+```
+
+> **Nota:** O comando `migrate` utiliza diretamente o TypeORM com o data-source em `data-source.ts`. Não exige build prévia — apenas `npm install` e o `.env` configurado.
+
+---
+
+## Autenticação JWT
+
+### Login
+
+| | Docker Compose | Sem Docker |
+|---|---|---|
+| **URL** | `http://localhost/login` | `http://localhost:3000/login` |
+
+**Exemplo de requisição:**
+
+```http
+POST http://localhost/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "senha": "Senha"
+}
+```
+
+**Resposta:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Usando o token
+
+Inclua o token em todas as requisições protegidas via header:
+
+```
+Authorization: Bearer <seu_token_aqui>
+```
+
+---
+
+## Documentação Swagger
+
+A documentação interativa está disponível após iniciar a aplicação:
+
+| Modo de execução | URL |
+|---|---|
+| Docker Compose | [http://localhost/api-docs](http://localhost/api-docs) |
+| Sem Docker | [http://localhost:3000/api-docs](http://localhost:3000/api-docs) |
+
+Gerada automaticamente pelo `@nestjs/swagger` a partir das anotações nos controllers, permite visualizar e testar todas as rotas diretamente pelo navegador.
+
+### Credenciais para testes (apenas desenvolvimento)
+
+| Campo | Valor |
+|---|---|
+| Email | `admin@email.com` |
+| Senha | `Admin@123` |
+
+> ⚠️ Essas credenciais existem **apenas em ambiente local** (via seed). Nunca as utilize em produção.
+
+Após obter o token, insira-o no campo **Authorize → Value** no Swagger. O prefixo `Bearer` é adicionado automaticamente.
 
 ---
 
@@ -478,222 +711,3 @@ Usuario ──── ManyToOne ───────►│    Venda    │
 ```
 
 A entidade **ItemVenda** é a **tabela pivô** que implementa a relação N:N entre `Venda` e `Item`: uma venda pode conter múltiplos itens, e um mesmo item pode aparecer em múltiplas vendas. Além das chaves estrangeiras, a tabela pivô armazena `quantia` e `valor` — dados específicos de cada item dentro de uma venda.
-
----
-
-## Containers Docker
-
-| Container | Imagem | Origem |
-|---|---|---|
-| Banco de dados | `postgres:17` | Baixada diretamente no `docker-compose.yml` |
-| Aplicação Node | `node:26-alpine` | Build via `Dockerfile`, referenciada como `node` |
-| Proxy reverso | `nginx:latest` | Build via `Dockerfile`, referenciada como `nginx` |
-
----
-
-## Configuração do Projeto
-
-### 1. Clonar o repositório
-
-```bash
-git clone https://github.com/CaiqueSouzaa/prova_segundo_bimestre.git
-cd prova_segundo_bimestre
-```
-
-### 2. Configurar o arquivo `.env`
-
-Copie o arquivo de exemplo e preencha com os seus dados de conexão:
-
-**Linux/Mac**
-```bash
-cp .env.example .env
-```
-
-**Windows**
-```bash
-copy .env.example .env
-```
-
-Edite o `.env` com as variáveis adequadas:
-
-```env
-DB_HOST=postgres
-DB_PORT=5432
-DB_DATABASE=db_vendas
-DB_USERNAME=vendas_user
-DB_PASSWORD=sua_senha_aqui
-
-JWT_SECRET=sua_chave_secreta_aqui
-```
-
-### 3. Instalar as dependências
-Ignore este processo caso deseje executar o projeto em Docker.
-
-```bash
-npm install
-```
-
-> ℹ️ **Docker:** o banco de dados e o usuário são criados automaticamente — não é necessária nenhuma configuração prévia no banco.  
-> ⚙️ **Sem Docker:** o banco e o usuário já devem existir antes de iniciar a aplicação.
-
-> ⚠️ Nunca utilize valores sensíveis em produção. Certifique-se de que o `.env` está no `.gitignore`.
-
-### 4. Migrations
-
-As migrations são executadas **automaticamente** ao iniciar o servidor. Para executá-las manualmente, veja a seção [Entrypoints e Comandos CLI](#entrypoints-e-comandos-cli).
-
----
-
-## Entrypoints e Comandos CLI
-
-O projeto possui dois entrypoints na raiz:
-
-### `server.js` — Servidor Web
-Em caso de execução através do Docker, o "server.js" é inicializado automaticamente, não sendo necessário sua execução.
-
-Inicia o servidor NestJS (requer build prévia):
-
-```bash
-# 1. Gerar o build de produção
-npm run build
-
-# 2. Iniciar o servidor
-node server.js
-```
-
-> Em desenvolvimento, use `npm run start:dev` para hot-reload.
-
-### `command.js` — Comandos Administrativos
-
-Executa tarefas administrativas via linha de comando:
-
-```bash
-node command.js <comando>
-```
-
-| Comando | Descrição |
-|---|---|
-| `migrate` | Executa todas as migrations pendentes |
-| `migration:generate` | Cria uma nova migration |
-| `seed` | Realiza a inserção de dados fakes no banco de dados |
-
-**Exemplos:**
-
-Em caso de execução via Docker, executar os comandos da seguinte forma:
-```bash
-# Executar migrations pendentes
-docker compose run runner node command.js migrate
-
-# Gerar uma nova migration
-docker compose run runner node command.js migration:generate
-
-# Executar seeds de dados fake
-docker compose run runner node command.js seed
-```
-
-```bash
-# Executar migrations pendentes
-node command.js migrate
-
-# Gerar uma nova migration
-node command.js migration:generate
-
-# Executar seeds de dados fake
-node command.js seed
-```
-
-> **Nota:** O comando `migrate` utiliza diretamente o TypeORM com o data-source em `data-source.ts`. Não exige build prévia — apenas `npm install` e o `.env` configurado.
-
----
-
-## Executando com Docker
-
-```bash
-# Build e inicialização de todos os serviços
-docker compose up -d --build
-
-# Parar os containers (mantém os dados)
-docker compose stop
-
-# Remover os containers (mantém os volumes)
-docker compose down
-
-# Remover containers e volumes (apaga os dados do banco)
-docker compose down -v
-```
-
----
-
-## Autenticação JWT
-
-### Login
-
-| | Docker Compose | Sem Docker |
-|---|---|---|
-| **URL** | `http://localhost/login` | `http://localhost:3000/login` |
-
-**Exemplo de requisição:**
-
-```http
-POST http://localhost/login
-Content-Type: application/json
-
-{
-  "email": "admin@admin.com",
-  "senha": "Senha"
-}
-```
-
-**Resposta:**
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-### Usando o token
-
-Inclua o token em todas as requisições protegidas via header:
-
-```
-Authorization: Bearer <seu_token_aqui>
-```
-
----
-
-## Documentação Swagger
-
-A documentação interativa está disponível após iniciar a aplicação:
-
-| Modo de execução | URL |
-|---|---|
-| Docker Compose | [http://localhost/api-docs](http://localhost/api-docs) |
-| Sem Docker | [http://localhost:3000/api-docs](http://localhost:3000/api-docs) |
-
-Gerada automaticamente pelo `@nestjs/swagger` a partir das anotações nos controllers, permite visualizar e testar todas as rotas diretamente pelo navegador.
-
-### Credenciais para testes (apenas desenvolvimento)
-
-| Campo | Valor |
-|---|---|
-| Email | `admin@email.com` |
-| Senha | `Admin@123` |
-
-> ⚠️ Essas credenciais existem **apenas em ambiente local** (via seed). Nunca as utilize em produção.
-
-Após obter o token, insira-o no campo **Authorize → Value** no Swagger. O prefixo `Bearer` é adicionado automaticamente.
-
----
-
-## Bibliotecas Utilizadas
-
-| Biblioteca | Finalidade |
-|---|---|
-| `@nestjs/typeorm` + `typeorm` | ORM e integração com NestJS |
-| `pg` | Driver para PostgreSQL |
-| `typescript` | Tipagem estática em tempo de transpilação |
-| `@nestjs/jwt` | Autenticação via JSON Web Token |
-| `bcrypt` | Geração e comparação de senhas seguras |
-| `@nestjs/config` | Gerenciamento de variáveis de ambiente |
-| `@nestjs/swagger` | Documentação interativa da API |
